@@ -79,14 +79,14 @@ public class SchermataCatalogo extends JPanel {
         JButton btnElimina = creaBottone("❌ Elimina", new Color(206, 43, 55));
         JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(206, 43, 55));
         
-        btnVisualizzazione = new JToggleButton("📊 Vista Griglia");
+        btnVisualizzazione = new JToggleButton("📊 Vista Griglia");        
         btnVisualizzazione.setBackground(new Color(206, 43, 55));
         btnVisualizzazione.setForeground(Color.WHITE);
-        btnVisualizzazione.setFont(new Font("Arial", Font.BOLD, 16));
+        btnVisualizzazione.setFont(new Font("Segoe UI Emoji", Font.BOLD, 16)); // ✅ Corretto
         btnVisualizzazione.setFocusPainted(false);
         btnVisualizzazione.setBorderPainted(false);
         btnVisualizzazione.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        
+
         btnAggiungi.addActionListener(e -> mostraDialogAggiungi());
         btnModifica.addActionListener(e -> mostraDialogModifica());
         btnElimina.addActionListener(e -> eliminaAuto());
@@ -137,15 +137,16 @@ public class SchermataCatalogo extends JPanel {
     }
 
     private JButton creaBottone(String testo, Color colore) {
-        JButton btn = new JButton(testo);
-        btn.setBackground(colore);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Arial", Font.BOLD, 16));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        return btn;
-    }    
+    JButton btn = new JButton(testo);
+    btn.setBackground(colore);
+    btn.setForeground(Color.WHITE);
+    btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+    btn.setFocusPainted(false);
+    btn.setBorderPainted(false);
+    btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    return btn;
+}
+       
     
     private void mostraDialogAggiungi() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Aggiungi Auto", true);
