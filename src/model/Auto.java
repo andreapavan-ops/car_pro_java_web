@@ -9,11 +9,12 @@ public class Auto {
     private double prezzo;
     private int giacenza;
     private int scorta_minima;
+    private String immagine;  // ← NUOVO CAMPO
     
     // Costruttore vuoto
     public Auto() {}
     
-    // Costruttore completo
+    // Costruttore completo (senza immagine - per retrocompatibilità)
     public Auto(String marca, String modello, String targa, int anno, 
                 double prezzo, int giacenza, int scorta_minima) {
         this.marca = marca;
@@ -23,6 +24,19 @@ public class Auto {
         this.prezzo = prezzo;
         this.giacenza = giacenza;
         this.scorta_minima = scorta_minima;
+    }
+    
+    // Costruttore completo CON immagine
+    public Auto(String marca, String modello, String targa, int anno, 
+                double prezzo, int giacenza, int scorta_minima, String immagine) {
+        this.marca = marca;
+        this.modello = modello;
+        this.targa = targa;
+        this.anno = anno;
+        this.prezzo = prezzo;
+        this.giacenza = giacenza;
+        this.scorta_minima = scorta_minima;
+        this.immagine = immagine;
     }
     
     // Getter e Setter
@@ -49,6 +63,10 @@ public class Auto {
     
     public int getScortaMinima() { return scorta_minima; }
     public void setScortaMinima(int scorta_minima) { this.scorta_minima = scorta_minima; }
+    
+    // ← NUOVO GETTER/SETTER per immagine
+    public String getImmagine() { return immagine; }
+    public void setImmagine(String immagine) { this.immagine = immagine; }
     
     @Override
     public String toString() {

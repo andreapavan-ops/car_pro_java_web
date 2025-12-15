@@ -1,11 +1,16 @@
 package gui;
 
+import util.DatabaseConnection;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class MainFrame extends JFrame {
     private JPanel contentPanel;
     private SchermataCatalogo schermataCatalogo;
+    private SchermataInventario schermataInventario;
+    private SchermataOrdini schermataOrdini;
+    private SchermataStatistiche schermataStatistiche;
     
     public MainFrame() {
         setTitle("CarPro - Gestionale Concessionaria");
@@ -38,8 +43,8 @@ public class MainFrame extends JFrame {
         JLabel logo = new JLabel("CarPro");
         logo.setFont(new Font("Arial", Font.BOLD, 28));
         logo.setForeground(Color.WHITE);
-        logo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        logo.setBorder(BorderFactory.createEmptyBorder(30, 0, 50, 0));
+        logo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        logo.setBorder(BorderFactory.createEmptyBorder(30, 15, 50, 0));
         sidebar.add(logo);
         
         // Pulsanti menu
@@ -56,16 +61,19 @@ public class MainFrame extends JFrame {
         return sidebar;
     }
     
-    private JButton creaBottoneSidebar(String text, java.awt.event.ActionListener action) {
+    private JButton creaBottoneSidebar(String text, ActionListener action) {
         JButton btn = new JButton(text);
-        btn.setMaximumSize(new Dimension(200, 50));
-        btn.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btn.setFont(new Font("Arial", Font.PLAIN, 16));
+        btn.setMaximumSize(new Dimension(200, 70));
+        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btn.setFont(new Font("Arial", Font.PLAIN, 18));
         btn.setForeground(Color.WHITE);
         btn.setBackground(new Color(99, 110, 114));
         btn.setFocusPainted(false);
         btn.setBorderPainted(false);
+        btn.setContentAreaFilled(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.setHorizontalAlignment(SwingConstants.LEFT);
+        btn.setBorder(BorderFactory.createEmptyBorder(0, 15, 10, 0));
         btn.addActionListener(action);
         
         // Effetto hover
@@ -93,35 +101,45 @@ public class MainFrame extends JFrame {
     
     private void mostraInventario() {
         contentPanel.removeAll();
-        JLabel label = new JLabel("📦 Inventario - In sviluppo...", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 24));
-        contentPanel.add(label, BorderLayout.CENTER);
+        if (schermataInventario == null) {
+            schermataInventario = new SchermataInventario();
+        }
+        contentPanel.add(schermataInventario, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
     
     private void mostraOrdini() {
         contentPanel.removeAll();
-        JLabel label = new JLabel("🛒 Ordini Fornitori - In sviluppo...", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 24));
-        contentPanel.add(label, BorderLayout.CENTER);
+        if (schermataOrdini == null) {
+            schermataOrdini = new SchermataOrdini();
+        }
+        contentPanel.add(schermataOrdini, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
     
     private void mostraVendite() {
         contentPanel.removeAll();
-        JLabel label = new JLabel("📊 Vendite e Statistiche - In sviluppo...", SwingConstants.CENTER);
-        label.setFont(new Font("Arial", Font.BOLD, 24));
-        contentPanel.add(label, BorderLayout.CENTER);
+        if (schermataStatistiche == null) {
+            schermataStatistiche = new SchermataStatistiche();
+        }
+        contentPanel.add(schermataStatistiche, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
     
     public static void main(String[] args) {
+        // Inizializza il database prima di avviare l'applicazione
+        System.out.println("=== AVVIO CARPRO ===");
+        System.out.println("Inizializzazione database...");
+        DatabaseConnection.inizializzaDatabase();
+        
+        // Avvia l'interfaccia grafica
         SwingUtilities.invokeLater(() -> {
             MainFrame frame = new MainFrame();
             frame.setVisible(true);
+            System.out.println("✅ CarPro avviato con successo!");
         });
     }
 }

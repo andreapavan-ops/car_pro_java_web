@@ -2,26 +2,43 @@ package gui;
 
 import dao.AutoDAO;
 import model.Auto;
+import gui.components.GrigliaAuto;
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 public class SchermataCatalogo extends JPanel {
     private JTable table;
     private DefaultTableModel tableModel;
     private AutoDAO autoDAO;
+    private GrigliaAuto grigliaAuto;
+    private JToggleButton btnVisualizzazione;
     
     public SchermataCatalogo() {
         autoDAO = new AutoDAO();
-        setLayout(new BorderLayout(10, 10));
+        setLayout(new BorderLayout(0, 0));
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         setBackground(Color.WHITE);
+        setBorder(null);
         
         // Header
-        JLabel titolo = new JLabel("🚗 Catalogo Auto");
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(new Color(0, 146, 70)); 
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 5, 20));
+        JLabel titolo = new JLabel("🚗    Catalogo Auto");
         titolo.setFont(new Font("Arial", Font.BOLD, 28));
-        add(titolo, BorderLayout.NORTH);
+        titolo.setForeground(Color.WHITE);
+        headerPanel.add(titolo);
+        add(headerPanel, BorderLayout.NORTH);        
+        
+        // Pannello centrale con CardLayout
+        JPanel panelCentrale = new JPanel(new CardLayout());
         
         // Tabella
         String[] colonne = {"ID", "Marca", "Modello", "Targa", "Anno", "Prezzo €", "Giacenza", "Scorta Min"};
@@ -37,26 +54,60 @@ public class SchermataCatalogo extends JPanel {
         table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
         
         JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+        panelCentrale.add(scrollPane, "TABELLA");
+        
+        // Griglia
+        grigliaAuto = new GrigliaAuto();
+        grigliaAuto.setOnAutoClickListener(auto -> {
+            JOptionPane.showMessageDialog(this, 
+                "Auto selezionata:\n" + 
+                auto.getMarca() + " " + auto.getModello() + "\n" +
+                "Prezzo: €" + auto.getPrezzo() + "\n" +
+                "Giacenza: " + auto.getGiacenza());
+        });
+        panelCentrale.add(grigliaAuto, "GRIGLIA");
+        
+        add(panelCentrale, BorderLayout.CENTER);
         
         // Pannello pulsanti
-        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelPulsanti.setBackground(Color.WHITE);
+        JPanel panelPulsanti = new JPanel(new GridLayout(1, 5, 0, 0));
+        panelPulsanti.setBackground(new Color(206, 43, 55));
+        panelPulsanti.setBorder(BorderFactory.createEmptyBorder(20, 5, 10, 5));
+
+        JButton btnAggiungi = creaBottone("➕ Aggiungi Auto", new Color(206, 43, 55));
+        JButton btnModifica = creaBottone("🛠️ Modifica", new Color(206, 43, 55));
+        JButton btnElimina = creaBottone("❌ Elimina", new Color(206, 43, 55));
+        JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(206, 43, 55));
         
-        JButton btnAggiungi = creaBottone("➕ Aggiungi Auto", new Color(46, 204, 113));
-        JButton btnModifica = creaBottone("✏️ Modifica", new Color(52, 152, 219));
-        JButton btnElimina = creaBottone("🗑️ Elimina", new Color(231, 76, 60));
-        JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(149, 165, 166));
+        btnVisualizzazione = new JToggleButton("📊 Vista Griglia");
+        btnVisualizzazione.setBackground(new Color(206, 43, 55));
+        btnVisualizzazione.setForeground(Color.WHITE);
+        btnVisualizzazione.setFont(new Font("Arial", Font.BOLD, 16));
+        btnVisualizzazione.setFocusPainted(false);
+        btnVisualizzazione.setBorderPainted(false);
+        btnVisualizzazione.setCursor(new Cursor(Cursor.HAND_CURSOR));
         
         btnAggiungi.addActionListener(e -> mostraDialogAggiungi());
         btnModifica.addActionListener(e -> mostraDialogModifica());
         btnElimina.addActionListener(e -> eliminaAuto());
         btnAggiorna.addActionListener(e -> caricaAuto());
         
+        btnVisualizzazione.addActionListener(e -> {
+            CardLayout cl = (CardLayout) panelCentrale.getLayout();
+            if (btnVisualizzazione.isSelected()) {
+                cl.show(panelCentrale, "GRIGLIA");
+                btnVisualizzazione.setText("📋 Vista Tabella");
+            } else {
+                cl.show(panelCentrale, "TABELLA");
+                btnVisualizzazione.setText("📊 Vista Griglia");
+            }
+        });
+        
         panelPulsanti.add(btnAggiungi);
         panelPulsanti.add(btnModifica);
         panelPulsanti.add(btnElimina);
         panelPulsanti.add(btnAggiorna);
+        panelPulsanti.add(btnVisualizzazione);
         
         add(panelPulsanti, BorderLayout.SOUTH);
         
@@ -64,21 +115,10 @@ public class SchermataCatalogo extends JPanel {
         caricaAuto();
     }
     
-    private JButton creaBottone(String text, Color color) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setBackground(color);
-        btn.setForeground(Color.WHITE);
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(160, 40));
-        return btn;
-    }
-    
     private void caricaAuto() {
         tableModel.setRowCount(0);
         List<Auto> listaAuto = autoDAO.getAll();
+        
         for (Auto auto : listaAuto) {
             Object[] row = {
                 auto.getId(),
@@ -92,12 +132,25 @@ public class SchermataCatalogo extends JPanel {
             };
             tableModel.addRow(row);
         }
+        
+        grigliaAuto.caricaAuto(listaAuto);
     }
+
+    private JButton creaBottone(String testo, Color colore) {
+        JButton btn = new JButton(testo);
+        btn.setBackground(colore);
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Arial", Font.BOLD, 16));
+        btn.setFocusPainted(false);
+        btn.setBorderPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        return btn;
+    }    
     
     private void mostraDialogAggiungi() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Aggiungi Auto", true);
-        dialog.setLayout(new GridLayout(8, 2, 10, 10));
-        dialog.setSize(400, 350);
+        dialog.setLayout(new GridLayout(9, 2, 10, 10));
+        dialog.setSize(500, 450);
         dialog.setLocationRelativeTo(this);
         
         JTextField txtMarca = new JTextField();
@@ -107,6 +160,21 @@ public class SchermataCatalogo extends JPanel {
         JTextField txtPrezzo = new JTextField();
         JTextField txtGiacenza = new JTextField("0");
         JTextField txtScortaMin = new JTextField("5");
+        
+        // Campo immagine con pulsante sfoglia
+        JTextField txtImmagine = new JTextField();
+        txtImmagine.setEditable(false);
+        JButton btnSfogliaImmagine = new JButton("📁 Sfoglia");
+        btnSfogliaImmagine.addActionListener(e -> {
+            String nomeFile = selezionaImmagine(dialog);
+            if (nomeFile != null) {
+                txtImmagine.setText(nomeFile);
+            }
+        });
+        
+        JPanel panelImmagine = new JPanel(new BorderLayout(5, 0));
+        panelImmagine.add(txtImmagine, BorderLayout.CENTER);
+        panelImmagine.add(btnSfogliaImmagine, BorderLayout.EAST);
         
         dialog.add(new JLabel("Marca:"));
         dialog.add(txtMarca);
@@ -122,6 +190,8 @@ public class SchermataCatalogo extends JPanel {
         dialog.add(txtGiacenza);
         dialog.add(new JLabel("Scorta Minima:"));
         dialog.add(txtScortaMin);
+        dialog.add(new JLabel("Immagine:"));
+        dialog.add(panelImmagine);
         
         JButton btnSalva = new JButton("Salva");
         JButton btnAnnulla = new JButton("Annulla");
@@ -135,7 +205,8 @@ public class SchermataCatalogo extends JPanel {
                     Integer.parseInt(txtAnno.getText()),
                     Double.parseDouble(txtPrezzo.getText()),
                     Integer.parseInt(txtGiacenza.getText()),
-                    Integer.parseInt(txtScortaMin.getText())
+                    Integer.parseInt(txtScortaMin.getText()),
+                    txtImmagine.getText().isEmpty() ? null : txtImmagine.getText()
                 );
                 
                 if (autoDAO.inserisci(auto)) {
@@ -164,10 +235,11 @@ public class SchermataCatalogo extends JPanel {
         }
         
         int id = (int) tableModel.getValueAt(selectedRow, 0);
+        Auto autoCorrente = autoDAO.getById(id);
         
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Modifica Auto", true);
-        dialog.setLayout(new GridLayout(8, 2, 10, 10));
-        dialog.setSize(400, 350);
+        dialog.setLayout(new GridLayout(9, 2, 10, 10));
+        dialog.setSize(500, 450);
         dialog.setLocationRelativeTo(this);
         
         JTextField txtMarca = new JTextField((String) tableModel.getValueAt(selectedRow, 1));
@@ -177,6 +249,21 @@ public class SchermataCatalogo extends JPanel {
         JTextField txtPrezzo = new JTextField((String) tableModel.getValueAt(selectedRow, 5));
         JTextField txtGiacenza = new JTextField(String.valueOf(tableModel.getValueAt(selectedRow, 6)));
         JTextField txtScortaMin = new JTextField(String.valueOf(tableModel.getValueAt(selectedRow, 7)));
+        
+        // Campo immagine con pulsante sfoglia
+        JTextField txtImmagine = new JTextField(autoCorrente != null && autoCorrente.getImmagine() != null ? autoCorrente.getImmagine() : "");
+        txtImmagine.setEditable(false);
+        JButton btnSfogliaImmagine = new JButton("📁 Sfoglia");
+        btnSfogliaImmagine.addActionListener(e -> {
+            String nomeFile = selezionaImmagine(dialog);
+            if (nomeFile != null) {
+                txtImmagine.setText(nomeFile);
+            }
+        });
+        
+        JPanel panelImmagine = new JPanel(new BorderLayout(5, 0));
+        panelImmagine.add(txtImmagine, BorderLayout.CENTER);
+        panelImmagine.add(btnSfogliaImmagine, BorderLayout.EAST);
         
         dialog.add(new JLabel("Marca:"));
         dialog.add(txtMarca);
@@ -192,6 +279,8 @@ public class SchermataCatalogo extends JPanel {
         dialog.add(txtGiacenza);
         dialog.add(new JLabel("Scorta Minima:"));
         dialog.add(txtScortaMin);
+        dialog.add(new JLabel("Immagine:"));
+        dialog.add(panelImmagine);
         
         JButton btnSalva = new JButton("Salva");
         JButton btnAnnulla = new JButton("Annulla");
@@ -205,7 +294,8 @@ public class SchermataCatalogo extends JPanel {
                     Integer.parseInt(txtAnno.getText()),
                     Double.parseDouble(txtPrezzo.getText().replace(",", ".")),
                     Integer.parseInt(txtGiacenza.getText()),
-                    Integer.parseInt(txtScortaMin.getText())
+                    Integer.parseInt(txtScortaMin.getText()),
+                    txtImmagine.getText().isEmpty() ? null : txtImmagine.getText()
                 );
                 auto.setId(id);
                 
@@ -225,6 +315,52 @@ public class SchermataCatalogo extends JPanel {
         dialog.add(btnAnnulla);
         
         dialog.setVisible(true);
+    }
+    
+    /**
+     * Apre un file chooser per selezionare un'immagine e la copia in resources/images/
+     */
+    private String selezionaImmagine(JDialog parent) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Seleziona un'immagine");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Immagini", "jpg", "jpeg", "png", "gif"));
+        
+        int result = fileChooser.showOpenDialog(parent);
+        
+        if (result == JFileChooser.APPROVE_OPTION) {
+            File fileSelezionato = fileChooser.getSelectedFile();
+            
+            try {
+                // Crea la cartella resources/images se non esiste
+                File dirImages = new File("resources/images");
+                if (!dirImages.exists()) {
+                    dirImages.mkdirs();
+                }
+                
+                // Copia il file nella cartella resources/images
+                String nomeFile = fileSelezionato.getName();
+                File destinazione = new File(dirImages, nomeFile);
+                
+                Files.copy(fileSelezionato.toPath(), destinazione.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                
+                JOptionPane.showMessageDialog(parent, 
+                    "✅ Immagine caricata con successo!\n" +
+                    "File: " + nomeFile, 
+                    "Successo", 
+                    JOptionPane.INFORMATION_MESSAGE);
+                
+                return nomeFile;
+                
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(parent, 
+                    "❌ Errore durante il caricamento dell'immagine:\n" + e.getMessage(), 
+                    "Errore", 
+                    JOptionPane.ERROR_MESSAGE);
+                return null;
+            }
+        }
+        
+        return null;
     }
     
     private void eliminaAuto() {
