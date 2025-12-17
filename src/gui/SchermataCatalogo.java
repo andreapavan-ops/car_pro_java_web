@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Locale;
 
 public class SchermataCatalogo extends JPanel {
     private JTable table;
@@ -60,9 +61,9 @@ public class SchermataCatalogo extends JPanel {
         grigliaAuto = new GrigliaAuto();
         grigliaAuto.setOnAutoClickListener(auto -> {
             JOptionPane.showMessageDialog(this, 
-                "Auto selezionata:\n" + 
+                "Auto selezionata:\n" +
                 auto.getMarca() + " " + auto.getModello() + "\n" +
-                "Prezzo: €" + auto.getPrezzo() + "\n" +
+                "Prezzo: €" + String.format(Locale.ITALIAN, "%,.2f", auto.getPrezzo()) + "\n" +
                 "Giacenza: " + auto.getGiacenza());
         });
         panelCentrale.add(grigliaAuto, "GRIGLIA");
@@ -126,7 +127,7 @@ public class SchermataCatalogo extends JPanel {
                 auto.getModello(),
                 auto.getTarga(),
                 auto.getAnno(),
-                String.format("%.2f", auto.getPrezzo()),
+                String.format(Locale.ITALIAN, "%,.2f", auto.getPrezzo()),
                 auto.getGiacenza(),
                 auto.getScortaMinima()
             };

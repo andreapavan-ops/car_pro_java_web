@@ -48,13 +48,13 @@ public class MainFrame extends JFrame {
         sidebar.add(logo);
         
         // Pulsanti menu
-        sidebar.add(creaBottoneSidebar("🚗 Catalogo Auto", e -> mostraCatalogo()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDE97 Catalogo Auto", e -> mostraCatalogo()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(creaBottoneSidebar("📦 Inventario", e -> mostraInventario()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDCE6 Inventario", e -> mostraInventario()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(creaBottoneSidebar("🛒 Ordini Fornitori", e -> mostraOrdini()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDED2 Ordini Fornitori", e -> mostraOrdini()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(creaBottoneSidebar("📊 Vendite", e -> mostraVendite()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDCCA Vendite", e -> mostraVendite()));
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -65,7 +65,7 @@ public class MainFrame extends JFrame {
         JButton btn = new JButton(text);
         btn.setMaximumSize(new Dimension(200, 70));
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setFont(new Font("Arial", Font.PLAIN, 18));
+        btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
         btn.setForeground(Color.WHITE);
         btn.setBackground(new Color(99, 110, 114));
         btn.setFocusPainted(false);
@@ -73,7 +73,7 @@ public class MainFrame extends JFrame {
         btn.setContentAreaFilled(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setBorder(BorderFactory.createEmptyBorder(0, 15, 10, 0));
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 0));
         btn.addActionListener(action);
         
         // Effetto hover

@@ -12,6 +12,7 @@ import java.awt.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 public class SchermataStatistiche extends JPanel {
     private JTable tableVendite;
@@ -225,7 +226,7 @@ public class SchermataStatistiche extends JPanel {
                 vendita.getDataVendita().format(formatter),
                 nomeAuto,
                 nomeCliente,
-                String.format("%.2f", vendita.getPrezzoVendita()),
+                String.format(Locale.ITALIAN, "%,.2f", vendita.getPrezzoVendita()),
                 metodoPagamento
             };
             modelVendite.addRow(row);
@@ -257,12 +258,12 @@ public class SchermataStatistiche extends JPanel {
         double margine = totaleVendite - totaleOrdini;
         
         // Aggiorna le label
-        lblTotaleVendite.setText(String.format("%.2f €", totaleVendite));
+        lblTotaleVendite.setText(String.format(Locale.ITALIAN, "%,.2f €", totaleVendite));
         lblNumeroVendite.setText(String.valueOf(numeroVendite));
-        lblMediaVendita.setText(String.format("%.2f €", mediaVendita));
+        lblMediaVendita.setText(String.format(Locale.ITALIAN, "%,.2f €", mediaVendita));
         lblAutoVendute.setText(String.valueOf(autoVendute));
-        lblTotaleOrdini.setText(String.format("%.2f €", totaleOrdini));
-        lblMargine.setText(String.format("%.2f €", margine));
+        lblTotaleOrdini.setText(String.format(Locale.ITALIAN, "%,.2f €", totaleOrdini));
+        lblMargine.setText(String.format(Locale.ITALIAN, "%,.2f €", margine));
         
         // Cambia colore margine in base al valore
         if (margine > 0) {
@@ -302,7 +303,7 @@ public class SchermataStatistiche extends JPanel {
                 int autoId = Integer.parseInt(autoStr.split(" - ")[0]);
                 Auto auto = autoDAO.getById(autoId);
                 if (auto != null) {
-                    txtPrezzo.setText(String.format("%.2f", auto.getPrezzo()));
+                    txtPrezzo.setText(String.format(Locale.ITALIAN, "%,.2f", auto.getPrezzo()));
                 }
             }
         });
@@ -340,7 +341,7 @@ public class SchermataStatistiche extends JPanel {
                 int autoId = Integer.parseInt(autoStr.split(" - ")[0]);
                 String nomeCliente = txtNome.getText();
                 String cognomeCliente = txtCognome.getText();
-                double prezzoVendita = Double.parseDouble(txtPrezzo.getText());
+                double prezzoVendita = Double.parseDouble(txtPrezzo.getText().replace(".", "").replace(",", "."));
                 
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 LocalDate dataVendita = LocalDate.parse(txtData.getText(), formatter);

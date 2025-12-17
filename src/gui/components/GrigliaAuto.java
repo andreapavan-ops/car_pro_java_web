@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.Locale;
 
 /**
  * Componente per visualizzare le auto in una griglia di card con immagini
@@ -242,7 +243,7 @@ public class GrigliaAuto extends JPanel {
         panel.add(Box.createVerticalStrut(10), BorderLayout.NORTH);
         
         // Prezzo
-        JLabel lblPrezzo = new JLabel(String.format("€ %.2f", auto.getPrezzo()));
+        JLabel lblPrezzo = new JLabel(String.format(Locale.ITALIAN, "€ %,.2f", auto.getPrezzo()));
         lblPrezzo.setFont(new Font("Segoe UI", Font.BOLD, 18));
         lblPrezzo.setForeground(new Color(40, 167, 69));
         
