@@ -11,6 +11,7 @@ public class MainFrame extends JFrame {
     private SchermataInventario schermataInventario;
     private SchermataOrdini schermataOrdini;
     private SchermataStatistiche schermataStatistiche;
+    private SchermataImmagini schermataImmagini; // ✅ NUOVO
     
     public MainFrame() {
         setTitle("CarPro - Gestionale Concessionaria");
@@ -55,6 +56,8 @@ public class MainFrame extends JFrame {
         sidebar.add(creaBottoneSidebar("🛒 Ordini Fornitori", e -> mostraOrdini()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
         sidebar.add(creaBottoneSidebar("📊 Vendite", e -> mostraVendite()));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
+        sidebar.add(creaBottoneSidebar("🖼️ Gestione Immagini", e -> mostraImmagini())); // ✅ NUOVO
         
         sidebar.add(Box.createVerticalGlue());
         
@@ -125,6 +128,17 @@ public class MainFrame extends JFrame {
             schermataStatistiche = new SchermataStatistiche();
         }
         contentPanel.add(schermataStatistiche, BorderLayout.CENTER);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+    
+    // ✅ NUOVO METODO
+    private void mostraImmagini() {
+        contentPanel.removeAll();
+        if (schermataImmagini == null) {
+            schermataImmagini = new SchermataImmagini();
+        }
+        contentPanel.add(schermataImmagini, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
