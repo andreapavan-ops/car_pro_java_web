@@ -39,8 +39,8 @@ public class SchermataOrdini extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(155, 89, 182));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
-        
-        JLabel titolo = new JLabel("🛒    Gestione Ordini e Fornitori");
+
+        JLabel titolo = new JLabel("Gestione Ordini e Fornitori");
         titolo.setFont(new Font("Arial", Font.BOLD, 28));
         titolo.setForeground(Color.WHITE);
         

@@ -30,16 +30,16 @@ public class SchermataInventario extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(52, 152, 219));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
-        
-        JLabel titolo = new JLabel("📦    Inventario e Movimenti");
+
+        JLabel titolo = new JLabel("Inventario Auto");
         titolo.setFont(new Font("Arial", Font.BOLD, 28));
         titolo.setForeground(Color.WHITE);
-        
+
         // Label per alert scorte minime
         lblAlertScorte = new JLabel();
         lblAlertScorte.setFont(new Font("Arial", Font.BOLD, 14));
         lblAlertScorte.setForeground(Color.YELLOW);
-        
+
         headerPanel.add(titolo, BorderLayout.WEST);
         headerPanel.add(lblAlertScorte, BorderLayout.EAST);
         add(headerPanel, BorderLayout.NORTH);

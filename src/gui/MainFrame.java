@@ -11,6 +11,7 @@ public class MainFrame extends JFrame {
     private SchermataInventario schermataInventario;
     private SchermataOrdini schermataOrdini;
     private SchermataStatistiche schermataStatistiche;
+    private SchermataImmagini schermataImmagini; // ✅ NUOVO
     
     public MainFrame() {
         setTitle("CarPro - Gestionale Concessionaria");
@@ -36,7 +37,7 @@ public class MainFrame extends JFrame {
     private JPanel creaSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBackground(new Color(45, 52, 54));
+        sidebar.setBackground(new Color(45, 52, 54, 204)); // 20% più trasparente (255 - 51 = 204)
         sidebar.setPreferredSize(new Dimension(220, getHeight()));
         
         // Logo/Titolo
@@ -44,49 +45,109 @@ public class MainFrame extends JFrame {
         logo.setFont(new Font("Arial", Font.BOLD, 28));
         logo.setForeground(Color.WHITE);
         logo.setAlignmentX(Component.LEFT_ALIGNMENT);
-        logo.setBorder(BorderFactory.createEmptyBorder(30, 15, 50, 0));
+        logo.setBorder(BorderFactory.createEmptyBorder(15, 20, 30, 0));
         sidebar.add(logo);
         
         // Pulsanti menu
-        sidebar.add(creaBottoneSidebar("\uD83D\uDE97 Catalogo Auto", e -> mostraCatalogo()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDE97", "Catalogo Auto", e -> mostraCatalogo()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(creaBottoneSidebar("\uD83D\uDCE6 Inventario", e -> mostraInventario()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDCE6", "Inventario", e -> mostraInventario()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(creaBottoneSidebar("\uD83D\uDED2 Ordini Fornitori", e -> mostraOrdini()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDED2", "Ordini Fornitori", e -> mostraOrdini()));
         sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
-        sidebar.add(creaBottoneSidebar("\uD83D\uDCCA Vendite", e -> mostraVendite()));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDCCA", "Vendite", e -> mostraVendite()));
+        sidebar.add(Box.createRigidArea(new Dimension(0, 10)));
+        sidebar.add(creaBottoneSidebar("\uD83D\uDDBC", "Immagini", e -> mostraImmagini()));
         
         sidebar.add(Box.createVerticalGlue());
         
         return sidebar;
     }
     
-    private JButton creaBottoneSidebar(String text, ActionListener action) {
-        JButton btn = new JButton(text);
-        btn.setMaximumSize(new Dimension(200, 70));
-        btn.setAlignmentX(Component.LEFT_ALIGNMENT);
-        btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
-        btn.setForeground(Color.WHITE);
-        btn.setBackground(new Color(99, 110, 114));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setContentAreaFilled(true);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 0));
-        btn.addActionListener(action);
-        
-        // Effetto hover
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+    private JPanel creaBottoneSidebar(String icona, String testo, ActionListener action) {
+        // Pannello contenitore per l'ombra
+        JPanel containerPanel = new JPanel() {
+            private boolean showShadow = false;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (showShadow) {
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    // Ombra sfumata sotto e a destra
+                    int shadowSize = 4;
+                    for (int i = 0; i < shadowSize; i++) {
+                        int alpha = 50 - (i * 12);
+                        if (alpha < 0) alpha = 0;
+                        g2d.setColor(new Color(0, 0, 0, alpha));
+                        g2d.fillRoundRect(i + 2, i + 2, getWidth() - i - 2, getHeight() - i - 2, 5, 5);
+                    }
+                    g2d.dispose();
+                }
+            }
+
+            @SuppressWarnings("unused")
+            public void setShadow(boolean show) {
+                this.showShadow = show;
+                repaint();
+            }
+        };
+        containerPanel.setLayout(new BoxLayout(containerPanel, BoxLayout.X_AXIS));
+        containerPanel.setBackground(new Color(45, 52, 54, 204));
+        containerPanel.setOpaque(false);
+        containerPanel.setMaximumSize(new Dimension(200, 50));
+        containerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        containerPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 5, 5));
+        containerPanel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Quadrato con icona (stesso colore sidebar)
+        Color coloreSidebar = new Color(45, 52, 54);
+        JLabel lblIcona = new JLabel(icona);
+        lblIcona.setOpaque(true);
+        lblIcona.setBackground(coloreSidebar);
+        lblIcona.setForeground(Color.WHITE);
+        lblIcona.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18));
+        lblIcona.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcona.setPreferredSize(new Dimension(35, 35));
+        lblIcona.setMinimumSize(new Dimension(35, 35));
+        lblIcona.setMaximumSize(new Dimension(35, 35));
+
+        // Testo
+        JLabel lblTesto = new JLabel(testo);
+        lblTesto.setForeground(Color.WHITE);
+        lblTesto.setFont(new Font("Arial", Font.BOLD, 14));
+        lblTesto.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
+
+        containerPanel.add(lblIcona);
+        containerPanel.add(lblTesto);
+
+        containerPanel.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                action.actionPerformed(null);
+            }
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(129, 140, 144));
+                // Sottolineatura testo
+                lblTesto.setText("<html><u>" + testo + "</u></html>");
+                // Attiva ombra sfumata
+                try {
+                    java.lang.reflect.Method m = containerPanel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(containerPanel, true);
+                } catch (Exception e) {}
             }
             public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(new Color(99, 110, 114));
+                // Rimuovi sottolineatura
+                lblTesto.setText(testo);
+                // Disattiva ombra
+                try {
+                    java.lang.reflect.Method m = containerPanel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(containerPanel, false);
+                } catch (Exception e) {}
             }
         });
-        
-        return btn;
+
+        return containerPanel;
     }
     
     private void mostraCatalogo() {
@@ -125,6 +186,17 @@ public class MainFrame extends JFrame {
             schermataStatistiche = new SchermataStatistiche();
         }
         contentPanel.add(schermataStatistiche, BorderLayout.CENTER);
+        contentPanel.revalidate();
+        contentPanel.repaint();
+    }
+    
+    // ✅ NUOVO METODO
+    private void mostraImmagini() {
+        contentPanel.removeAll();
+        if (schermataImmagini == null) {
+            schermataImmagini = new SchermataImmagini();
+        }
+        contentPanel.add(schermataImmagini, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }

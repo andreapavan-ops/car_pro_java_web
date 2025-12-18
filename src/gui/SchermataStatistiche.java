@@ -41,11 +41,11 @@ public class SchermataStatistiche extends JPanel {
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(230, 126, 34));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
-        
-        JLabel titolo = new JLabel("📊    Vendite e Statistiche");
+
+        JLabel titolo = new JLabel("Vendite e Statistiche");
         titolo.setFont(new Font("Arial", Font.BOLD, 28));
         titolo.setForeground(Color.WHITE);
-        
+
         headerPanel.add(titolo, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
         
