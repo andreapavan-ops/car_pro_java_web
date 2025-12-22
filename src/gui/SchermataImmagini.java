@@ -23,6 +23,7 @@ public class SchermataImmagini extends JPanel {
     private JButton btnPrecedente;
     private JButton btnSuccessiva;
     private JButton btnElimina;
+    private JButton btnModifica;
     private JList<String> listaImmagini;
     private DefaultListModel<String> modelLista;
     
@@ -192,10 +193,20 @@ public class SchermataImmagini extends JPanel {
         btnElimina.setForeground(Color.BLACK);
         btnElimina.setFocusPainted(false);
         btnElimina.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnElimina.setPreferredSize(new Dimension(220, 40));
+        btnElimina.setPreferredSize(new Dimension(200, 40));
         btnElimina.setEnabled(false);
         btnElimina.addActionListener(e -> eliminaImmagine());
-        
+
+        btnModifica = new JButton("✏️ Modifica Immagine");
+        btnModifica.setFont(new Font("Arial", Font.BOLD, 14));
+        btnModifica.setBackground(new Color(206, 43, 55));
+        btnModifica.setForeground(Color.BLACK);
+        btnModifica.setFocusPainted(false);
+        btnModifica.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnModifica.setPreferredSize(new Dimension(200, 40));
+        btnModifica.setEnabled(false);
+        btnModifica.addActionListener(e -> modificaImmagine());
+
         JButton btnAggiorna = new JButton("🔄 Ricarica Immagini");
         btnAggiorna.setFont(new Font("Arial", Font.BOLD, 14));
         btnAggiorna.setBackground(new Color(206, 43, 55));
@@ -210,6 +221,7 @@ public class SchermataImmagini extends JPanel {
         });
         
         panelPulsanti.add(btnCaricaImmagine);
+        panelPulsanti.add(btnModifica);
         panelPulsanti.add(btnElimina);
         panelPulsanti.add(btnAggiorna);
         
@@ -279,14 +291,14 @@ public class SchermataImmagini extends JPanel {
         }
         
         // Carica immagini aggiuntive (pattern: nomefile_1.jpg, nomefile_2.jpg, ...)
-        if (autoSelezionata.getImmagine() != null) {
+        if (autoSelezionata.getImmagine() != null && autoSelezionata.getImmagine().contains(".")) {
             File dirImages = new File("resources/images");
             if (dirImages.exists() && dirImages.isDirectory()) {
                 String nomeBase = autoSelezionata.getImmagine().replaceAll("\\.[^.]+$", "");
                 String estensione = autoSelezionata.getImmagine().substring(
                     autoSelezionata.getImmagine().lastIndexOf(".")
                 );
-                
+
                 for (int i = 1; i <= 50; i++) {
                     String nomeFile = nomeBase + "_" + i + estensione;
                     File file = new File(dirImages, nomeFile);
@@ -303,6 +315,7 @@ public class SchermataImmagini extends JPanel {
         btnPrecedente.setEnabled(hasImages);
         btnSuccessiva.setEnabled(hasImages);
         btnElimina.setEnabled(hasImages);
+        btnModifica.setEnabled(hasImages);
         
         if (hasImages) {
             mostraImmagineCorrente();
@@ -361,8 +374,18 @@ public class SchermataImmagini extends JPanel {
         int result = fileChooser.showOpenDialog(this);
         
         if (result == JFileChooser.APPROVE_OPTION) {
+            // Gestisce sia selezione singola che multipla
             File[] filesSelezionati = fileChooser.getSelectedFiles();
-            
+            if (filesSelezionati == null || filesSelezionati.length == 0) {
+                // Fallback per selezione singola
+                File fileSingolo = fileChooser.getSelectedFile();
+                if (fileSingolo != null) {
+                    filesSelezionati = new File[] { fileSingolo };
+                } else {
+                    return;
+                }
+            }
+
             try {
                 File dirImages = new File("resources/images");
                 if (!dirImages.exists()) {
@@ -370,11 +393,12 @@ public class SchermataImmagini extends JPanel {
                 }
                 
                 int numeroCaricate = 0;
-                
+                int prossimoNumero = immaginiAuto.size(); // Conta le immagini già esistenti
+
                 for (File fileSelezionato : filesSelezionati) {
                     // Determina il nome del file
                     String nomeFile;
-                    
+
                     if (autoSelezionata.getImmagine() == null || autoSelezionata.getImmagine().isEmpty()) {
                         // Prima immagine - diventa l'immagine principale
                         nomeFile = "auto_" + autoSelezionata.getId() + "_" + fileSelezionato.getName();
@@ -383,18 +407,20 @@ public class SchermataImmagini extends JPanel {
                     } else {
                         // Immagini successive - usa pattern _1, _2, _3...
                         String nomeBase = autoSelezionata.getImmagine().replaceAll("\\.[^.]+$", "");
-                        String estensione = fileSelezionato.getName().substring(
-                            fileSelezionato.getName().lastIndexOf(".")
-                        );
-                        
-                        int numeroImmagine = immaginiAuto.size();
-                        nomeFile = nomeBase + "_" + numeroImmagine + estensione;
+                        String nomeFileOriginale = fileSelezionato.getName();
+                        String estensione = "";
+                        if (nomeFileOriginale.contains(".")) {
+                            estensione = nomeFileOriginale.substring(nomeFileOriginale.lastIndexOf("."));
+                        }
+
+                        nomeFile = nomeBase + "_" + prossimoNumero + estensione;
+                        prossimoNumero++; // Incrementa per la prossima immagine
                     }
-                    
+
                     File destinazione = new File(dirImages, nomeFile);
-                    Files.copy(fileSelezionato.toPath(), destinazione.toPath(), 
+                    Files.copy(fileSelezionato.toPath(), destinazione.toPath(),
                               StandardCopyOption.REPLACE_EXISTING);
-                    
+
                     numeroCaricate++;
                 }
                 
@@ -459,5 +485,155 @@ public class SchermataImmagini extends JPanel {
                     JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    private void modificaImmagine() {
+        if (immaginiAuto.isEmpty() || indiceCorrente >= immaginiAuto.size()) {
+            return;
+        }
+
+        String nomeImmagineAttuale = immaginiAuto.get(indiceCorrente);
+        boolean isPrincipale = (autoSelezionata.getImmagine() != null &&
+                                autoSelezionata.getImmagine().equals(nomeImmagineAttuale));
+
+        // Dialog per modifica
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Modifica Immagine", true);
+        dialog.setLayout(new BorderLayout(10, 10));
+        dialog.setSize(500, 250);
+        dialog.setLocationRelativeTo(this);
+
+        JPanel panelContenuto = new JPanel();
+        panelContenuto.setLayout(new BoxLayout(panelContenuto, BoxLayout.Y_AXIS));
+        panelContenuto.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Info immagine attuale
+        JLabel lblInfo = new JLabel("Immagine attuale: " + nomeImmagineAttuale);
+        lblInfo.setFont(new Font("Arial", Font.BOLD, 14));
+        lblInfo.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        if (isPrincipale) {
+            JLabel lblPrincipale = new JLabel("⭐ Questa è l'immagine principale");
+            lblPrincipale.setFont(new Font("Arial", Font.ITALIC, 12));
+            lblPrincipale.setForeground(new Color(0, 146, 70));
+            lblPrincipale.setAlignmentX(Component.LEFT_ALIGNMENT);
+            panelContenuto.add(lblPrincipale);
+            panelContenuto.add(Box.createRigidArea(new Dimension(0, 10)));
+        }
+
+        panelContenuto.add(lblInfo);
+        panelContenuto.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Campo nuovo nome
+        JPanel panelNome = new JPanel(new BorderLayout(10, 0));
+        panelNome.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panelNome.setMaximumSize(new Dimension(450, 30));
+        JLabel lblNuovoNome = new JLabel("Nuovo nome:");
+        lblNuovoNome.setPreferredSize(new Dimension(100, 25));
+
+        // Estrai nome senza estensione
+        String estensione = "";
+        String nomeBase = nomeImmagineAttuale;
+        if (nomeImmagineAttuale.contains(".")) {
+            estensione = nomeImmagineAttuale.substring(nomeImmagineAttuale.lastIndexOf("."));
+            nomeBase = nomeImmagineAttuale.substring(0, nomeImmagineAttuale.lastIndexOf("."));
+        }
+
+        JTextField txtNuovoNome = new JTextField(nomeBase);
+        JLabel lblEstensione = new JLabel(estensione);
+        lblEstensione.setFont(new Font("Arial", Font.BOLD, 12));
+
+        panelNome.add(lblNuovoNome, BorderLayout.WEST);
+        panelNome.add(txtNuovoNome, BorderLayout.CENTER);
+        panelNome.add(lblEstensione, BorderLayout.EAST);
+
+        panelContenuto.add(panelNome);
+        panelContenuto.add(Box.createRigidArea(new Dimension(0, 15)));
+
+        // Checkbox per impostare come principale
+        JCheckBox chkPrincipale = new JCheckBox("Imposta come immagine principale");
+        chkPrincipale.setAlignmentX(Component.LEFT_ALIGNMENT);
+        chkPrincipale.setSelected(isPrincipale);
+        chkPrincipale.setEnabled(!isPrincipale); // Disabilita se già principale
+        panelContenuto.add(chkPrincipale);
+
+        dialog.add(panelContenuto, BorderLayout.CENTER);
+
+        // Pulsanti
+        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton btnSalva = new JButton("💾 Salva");
+        JButton btnAnnulla = new JButton("Annulla");
+
+        String estensioneFinale = estensione;
+        btnSalva.addActionListener(e -> {
+            String nuovoNome = txtNuovoNome.getText().trim();
+            if (nuovoNome.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog,
+                    "⚠️ Il nome non può essere vuoto!",
+                    "Attenzione",
+                    JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Aggiungi estensione
+            nuovoNome = nuovoNome + estensioneFinale;
+
+            // Se il nome è cambiato, rinomina il file
+            if (!nuovoNome.equals(nomeImmagineAttuale)) {
+                File fileOriginale = new File("resources/images/" + nomeImmagineAttuale);
+                File fileNuovo = new File("resources/images/" + nuovoNome);
+
+                if (fileNuovo.exists()) {
+                    JOptionPane.showMessageDialog(dialog,
+                        "⚠️ Esiste già un file con questo nome!",
+                        "Attenzione",
+                        JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                if (fileOriginale.renameTo(fileNuovo)) {
+                    // Se era l'immagine principale, aggiorna il database
+                    if (isPrincipale) {
+                        autoSelezionata.setImmagine(nuovoNome);
+                        autoDAO.aggiorna(autoSelezionata);
+                    }
+
+                    JOptionPane.showMessageDialog(dialog,
+                        "✅ Immagine rinominata con successo!\n" +
+                        "Da: " + nomeImmagineAttuale + "\n" +
+                        "A: " + nuovoNome,
+                        "Successo",
+                        JOptionPane.INFORMATION_MESSAGE);
+                } else {
+                    JOptionPane.showMessageDialog(dialog,
+                        "❌ Errore durante la rinomina del file!",
+                        "Errore",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            }
+
+            // Se richiesto, imposta come principale
+            if (chkPrincipale.isSelected() && !isPrincipale) {
+                String nomeFinale = nuovoNome.equals(nomeImmagineAttuale) ? nomeImmagineAttuale : nuovoNome;
+                autoSelezionata.setImmagine(nomeFinale);
+                autoDAO.aggiorna(autoSelezionata);
+
+                JOptionPane.showMessageDialog(dialog,
+                    "✅ Immagine impostata come principale!",
+                    "Successo",
+                    JOptionPane.INFORMATION_MESSAGE);
+            }
+
+            dialog.dispose();
+            caricaImmaginiAuto();
+        });
+
+        btnAnnulla.addActionListener(e -> dialog.dispose());
+
+        panelPulsanti.add(btnSalva);
+        panelPulsanti.add(btnAnnulla);
+        dialog.add(panelPulsanti, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
     }
 }

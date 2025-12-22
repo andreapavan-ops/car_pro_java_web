@@ -1,0 +1,4 @@
+.DS_Store
+*.db
+resources/.DS_Store
+resources/images/.DS_Store

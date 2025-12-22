@@ -259,7 +259,15 @@ public class SchermataCatalogo extends JPanel {
             
             if (fileImmagine.exists()) {
                 ImageIcon icon = new ImageIcon(fileImmagine.getAbsolutePath());
-                Image img = icon.getImage().getScaledInstance(480, 380, Image.SCALE_SMOOTH);
+                // Mantieni le proporzioni dell'immagine
+                int maxWidth = 480;
+                int maxHeight = 380;
+                int originalWidth = icon.getIconWidth();
+                int originalHeight = icon.getIconHeight();
+                double ratio = Math.min((double) maxWidth / originalWidth, (double) maxHeight / originalHeight);
+                int newWidth = (int) (originalWidth * ratio);
+                int newHeight = (int) (originalHeight * ratio);
+                Image img = icon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
                 lblImmagine.setIcon(new ImageIcon(img));
                 lblImmagine.setText("");
             } else {
@@ -471,11 +479,19 @@ public class SchermataCatalogo extends JPanel {
         if (fileImmagine.exists()) {
             JLabel lblFullscreen = new JLabel();
             lblFullscreen.setHorizontalAlignment(SwingConstants.CENTER);
-            
+
             ImageIcon icon = new ImageIcon(fileImmagine.getAbsolutePath());
-            Image img = icon.getImage().getScaledInstance(950, 750, Image.SCALE_SMOOTH);
+            // Mantieni le proporzioni dell'immagine
+            int maxWidth = 950;
+            int maxHeight = 750;
+            int originalWidth = icon.getIconWidth();
+            int originalHeight = icon.getIconHeight();
+            double ratio = Math.min((double) maxWidth / originalWidth, (double) maxHeight / originalHeight);
+            int newWidth = (int) (originalWidth * ratio);
+            int newHeight = (int) (originalHeight * ratio);
+            Image img = icon.getImage().getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
             lblFullscreen.setIcon(new ImageIcon(img));
-            
+
             fullscreenDialog.add(lblFullscreen, BorderLayout.CENTER);
         }
         
@@ -742,12 +758,12 @@ public class SchermataCatalogo extends JPanel {
                     txtModello.getText(),
                     txtTarga.getText(),
                     Integer.parseInt(txtAnno.getText()),
-                    Double.parseDouble(txtPrezzo.getText()),
+                    Double.parseDouble(txtPrezzo.getText().replace(",", ".")),
                     Integer.parseInt(txtGiacenza.getText()),
                     Integer.parseInt(txtScortaMin.getText()),
                     txtImmagine.getText().isEmpty() ? null : txtImmagine.getText()
                 );
-                
+
                 if (autoDAO.inserisci(auto)) {
                     JOptionPane.showMessageDialog(dialog, "✅ Auto aggiunta con successo!");
                     dialog.dispose();
