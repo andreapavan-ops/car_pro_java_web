@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload File</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h2 { color: #333; }
+        input[type="file"] { margin-bottom: 10px; }
+        button { margin-top: 5px; padding: 5px 10px; }
+        ul { margin-top: 20px; }
+        li { margin-bottom: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Carica un file</h2>
+
+<form id="uploadForm">
+    <input type="file" id="fileInput" name="file" required>
+    <br>
+    <button type="submit">Carica</button>
+</form>
+
+<p id="message"></p>
+
+<h2>Lista dei file caricati</h2>
+<ul id="fileList"></ul>
+
+<script>
+    const uploadForm = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('fileInput');
+    const message = document.getElementById('message');
+    const fileList = document.getElementById('fileList');
+
+    // Funzione per aggiornare la lista dei file
+    function refreshFileList() {
+        fetch('/files')
+            .then(response => response.json())
+            .then(files => {
+                fileList.innerHTML = '';
+                if (files.length === 0) {
+                    fileList.innerHTML = '<li>(Nessun file caricato)</li>';
+                } else {
+                    files.forEach(file => {
+                        const li = document.createElement('li');
+                        li.textContent = file;
+                        fileList.appendChild(li);
+                    });
+                }
+            })
+            .catch(err => console.error('Errore caricamento lista file:', err));
+    }
+
+    // Caricamento file
+    uploadForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        fetch('/files/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.text())
+        .then(text => {
+            message.textContent = text;
+            message.className = 'success';
+            fileInput.value = '';
+            refreshFileList();
+        })
+        .catch(err => {
+            message.textContent = 'Errore durante il caricamento';
+            message.className = 'error';
+            console.error(err);
+        });
+    });
+
+    // Aggiorna la lista dei file all'apertura della pagina
+    refreshFileList();
+</script>
+
+</body>
+</html>

@@ -1,4 +1,11 @@
 .DS_Store
 *.db
-resources/.DS_Store
-resources/images/.DS_Store
+.vscode/
+
+# Cartelle temporanee da rimuovere
+uploadlavorodigruppo/
+
+# Build folders
+desktop/bin/
+web/target/
+web/uploads/
