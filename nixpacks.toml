@@ -1,3 +1,4 @@
+# Railway config - Java 17
 [phases.setup]
 nixPkgs = ["jdk17", "maven"]
 
