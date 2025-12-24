@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - CarPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: linear-gradient(135deg, #CE2B37 0%, #8B0000 100%);
+            padding: 20px 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FFD700;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #fff;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .login-container {
+            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+            border-radius: 30px;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            color: #fff;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #888;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input {
+            width: 100%;
+            padding: 18px 20px;
+            border: 2px solid #333;
+            border-radius: 15px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #CE2B37;
+            box-shadow: 0 0 20px rgba(206, 43, 55, 0.2);
+        }
+
+        input::placeholder {
+            color: #555;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #CE2B37 0%, #8B0000 100%);
+            border: none;
+            border-radius: 15px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(206, 43, 55, 0.4);
+        }
+
+        .error-message {
+            background: rgba(206, 43, 55, 0.2);
+            color: #CE2B37;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #CE2B37;
+            text-align: center;
+        }
+
+        .success-message {
+            background: rgba(0, 200, 83, 0.2);
+            color: #00c853;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #00c853;
+            text-align: center;
+        }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: #FFD700;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 30px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #333;
+        }
+
+        .divider span {
+            padding: 0 15px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/catalogo" class="logo">Car<span>Pro</span></a>
+    </header>
+
+    <main>
+        <div class="login-container">
+            <h1>Benvenuto</h1>
+            <p class="subtitle">Accedi per gestire il catalogo</p>
+
+            <div th:if="${errore}" class="error-message" th:text="${errore}"></div>
+            <div th:if="${messaggio}" class="success-message" th:text="${messaggio}"></div>
+
+            <form action="/login" method="post">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Inserisci username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Inserisci password" required>
+                </div>
+
+                <button type="submit" class="btn-login">Accedi</button>
+            </form>
+
+            <a href="/catalogo" class="back-link">← Torna al catalogo</a>
+        </div>
+    </main>
+
+    <footer>
+        <p>CarPro - Sistema Gestione Auto © 2024</p>
+    </footer>
+</body>
+</html>

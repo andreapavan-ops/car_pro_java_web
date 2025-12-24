@@ -184,6 +184,36 @@
             border: 1px solid #CE2B37;
         }
 
+        .nav-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-add {
+            background: #FFD700;
+            color: #1a1a1a;
+            font-weight: bold;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
         /* Empty State */
         .empty-state {
             text-align: center;
@@ -210,12 +240,19 @@
 <body>
     <header>
         <div class="logo">Car<span>Pro</span></div>
-        <form class="search-container" action="/catalogo" method="get">
-            <input type="text" name="search" class="search-input"
-                   placeholder="Cerca marca o modello..."
-                   th:value="${search}">
-            <button type="submit" class="search-btn">Cerca</button>
-        </form>
+        <div class="header-right">
+            <form class="search-container" action="/catalogo" method="get">
+                <input type="text" name="search" class="search-input"
+                       placeholder="Cerca marca o modello..."
+                       th:value="${search}">
+                <button type="submit" class="search-btn">Cerca</button>
+            </form>
+            <div class="nav-links">
+                <a th:if="${session.utente != null}" href="/auto/nuova" class="btn-add">+ Aggiungi Auto</a>
+                <a th:if="${session.utente != null}" href="/logout">Logout</a>
+                <a th:if="${session.utente == null}" href="/login">Login</a>
+            </div>
+        </div>
     </header>
 
     <main>

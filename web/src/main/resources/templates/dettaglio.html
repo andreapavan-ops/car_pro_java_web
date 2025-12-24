@@ -175,6 +175,56 @@
             border: 2px solid #CE2B37;
         }
 
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-edit {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #CE2B37 0%, #8B0000 100%);
+            color: #fff;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         /* Responsive */
         @media (max-width: 900px) {
             .dettaglio-container {
@@ -206,7 +256,12 @@
 <body>
     <header>
         <a href="/catalogo" class="logo">Car<span>Pro</span></a>
-        <a href="/catalogo" class="back-btn">&#8592; Torna al Catalogo</a>
+        <div class="nav-links">
+            <a href="/catalogo">Catalogo</a>
+            <a th:if="${session.utente != null}" href="/auto/nuova">Aggiungi Auto</a>
+            <a th:if="${session.utente != null}" href="/logout">Logout</a>
+            <a th:if="${session.utente == null}" href="/login">Login</a>
+        </div>
     </header>
 
     <main>
@@ -244,6 +299,14 @@
                      th:classappend="${auto.giacenza > 0} ? 'disponibile' : 'non-disponibile'"
                      th:text="${auto.giacenza > 0} ? 'Disponibile' : 'Non disponibile'">
                     Disponibile
+                </div>
+
+                <div class="action-buttons" th:if="${session.utente != null}">
+                    <a th:href="@{/auto/{id}/modifica(id=${auto.id})}" class="btn btn-edit">Modifica</a>
+                    <form th:action="@{/auto/{id}/elimina(id=${auto.id})}" method="post" style="display: inline;"
+                          onsubmit="return confirm('Sei sicuro di voler eliminare questa auto?');">
+                        <button type="submit" class="btn btn-delete">Elimina</button>
+                    </form>
                 </div>
             </div>
         </div>

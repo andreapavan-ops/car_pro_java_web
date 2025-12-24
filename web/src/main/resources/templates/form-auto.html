@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${auto.id != null} ? 'Modifica Auto - CarPro' : 'Nuova Auto - CarPro'">Form Auto - CarPro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #CE2B37 0%, #8B0000 100%);
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: bold;
+            color: #FFD700;
+            text-decoration: none;
+        }
+
+        .logo span {
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: background 0.3s;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        main {
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 36px;
+        }
+
+        .form-container {
+            background: linear-gradient(145deg, #2a2a2a, #1f1f1f);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background: #1a1a1a;
+            color: #fff;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #CE2B37;
+        }
+
+        input::placeholder {
+            color: #555;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .btn-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 18px 30px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #1a1a1a;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 2px solid #333;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .error-message {
+            background: rgba(206, 43, 55, 0.2);
+            color: #CE2B37;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #CE2B37;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: #555;
+            border-top: 1px solid #333;
+            margin-top: 50px;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="/catalogo" class="logo">Car<span>Pro</span></a>
+        <div class="nav-links">
+            <a href="/catalogo">Catalogo</a>
+            <a href="/logout">Logout</a>
+        </div>
+    </header>
+
+    <main>
+        <h1 th:text="${auto.id != null} ? 'Modifica Auto' : 'Nuova Auto'">Form Auto</h1>
+
+        <div class="form-container">
+            <div th:if="${errore}" class="error-message" th:text="${errore}"></div>
+
+            <form th:action="${auto.id != null} ? @{/auto/{id}/modifica(id=${auto.id})} : @{/auto/nuova}"
+                  method="post" th:object="${auto}">
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="marca">Marca</label>
+                        <input type="text" id="marca" th:field="*{marca}" placeholder="es. Ferrari" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modello">Modello</label>
+                        <input type="text" id="modello" th:field="*{modello}" placeholder="es. 296 GTB" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="anno">Anno</label>
+                        <input type="number" id="anno" th:field="*{anno}" placeholder="es. 2024" min="1900" max="2030" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="prezzo">Prezzo (€)</label>
+                        <input type="number" id="prezzo" th:field="*{prezzo}" placeholder="es. 250000" step="0.01" min="0" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="giacenza">Giacenza</label>
+                        <input type="number" id="giacenza" th:field="*{giacenza}" placeholder="es. 5" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="scortaMinima">Scorta Minima</label>
+                        <input type="number" id="scortaMinima" th:field="*{scortaMinima}" placeholder="es. 2" min="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="targa">Targa</label>
+                        <input type="text" id="targa" th:field="*{targa}" placeholder="es. AA000BB">
+                    </div>
+                    <div class="form-group">
+                        <label for="immagine">Nome Immagine</label>
+                        <input type="text" id="immagine" th:field="*{immagine}" placeholder="es. ferrari.png">
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <a href="/catalogo" class="btn btn-secondary">Annulla</a>
+                    <button type="submit" class="btn btn-primary"
+                            th:text="${auto.id != null} ? 'Salva Modifiche' : 'Aggiungi Auto'">Salva</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>CarPro - Sistema Gestione Auto © 2024</p>
+    </footer>
+</body>
+</html>
