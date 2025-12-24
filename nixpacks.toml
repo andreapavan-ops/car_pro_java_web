@@ -1,5 +1,6 @@
 [phases.setup]
-nixPkgs = ["jdk", "maven"]
+nixPkgs = ["jdk21", "maven"]
+nixPkgsArchive = "ab82a9612aa45f7dfe7e436e41d65ade7d8ad42f"
 
 [phases.build]
 cmds = ["cd web && mvn clean package -DskipTests"]
