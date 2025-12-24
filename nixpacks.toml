@@ -1,0 +1,8 @@
+[phases.setup]
+nixPkgs = ["jdk21", "maven"]
+
+[phases.build]
+cmds = ["cd web && mvn clean package -DskipTests"]
+
+[start]
+cmd = "java -jar web/target/*.jar"
