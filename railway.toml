@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+buildCommand = "cd web && mvn clean package -DskipTests"
+
+[deploy]
+startCommand = "java -jar web/target/*.jar"
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
