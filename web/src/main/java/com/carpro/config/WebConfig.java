@@ -9,8 +9,8 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // Serve immagini dalla cartella desktop/resources/images
+        // Serve immagini dalla cartella desktop/resources/images (percorso relativo per Railway)
         registry.addResourceHandler("/images/**")
-                .addResourceLocations("file:/Users/user/Documents/CORSO_ITS/Car_Pro_Java_Web/desktop/resources/images/");
+                .addResourceLocations("file:desktop/resources/images/");
     }
 }
