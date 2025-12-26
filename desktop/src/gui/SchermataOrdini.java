@@ -8,8 +8,11 @@ import model.Fornitore;
 import model.Auto;
 import model.RigaOrdine;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -25,31 +28,25 @@ public class SchermataOrdini extends JPanel {
     private OrdineDAO ordineDAO;
     private FornitoreDAO fornitoreDAO;
     private AutoDAO autoDAO;
-    private JLabel lblStatistiche;
-    
+
     public SchermataOrdini() {
         ordineDAO = new OrdineDAO();
         fornitoreDAO = new FornitoreDAO();
         autoDAO = new AutoDAO();
-        
+
         setLayout(new BorderLayout(0, 0));
         setBackground(Color.WHITE);
-        
+
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(155, 89, 182));
+        headerPanel.setBackground(new Color(0, 146, 70));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
         JLabel titolo = new JLabel("Gestione Ordini e Fornitori");
         titolo.setFont(new Font("Arial", Font.BOLD, 28));
         titolo.setForeground(Color.WHITE);
-        
-        lblStatistiche = new JLabel();
-        lblStatistiche.setFont(new Font("Arial", Font.BOLD, 14));
-        lblStatistiche.setForeground(Color.WHITE);
-        
-        headerPanel.add(titolo, BorderLayout.WEST);
-        headerPanel.add(lblStatistiche, BorderLayout.EAST);
+
+        headerPanel.add(titolo, BorderLayout.CENTER);
         add(headerPanel, BorderLayout.NORTH);
         
         // Split panel superiore (Fornitori e Ordini)
@@ -75,13 +72,35 @@ public class SchermataOrdini extends JPanel {
         splitPaneInferiore.setBottomComponent(panelDettaglio);
         
         splitPaneSuperiore.setBottomComponent(splitPaneInferiore);
-        
+
         add(splitPaneSuperiore, BorderLayout.CENTER);
-        
+
+        // Footer con pulsanti stile Catalogo
+        JPanel panelFooter = new JPanel(new GridLayout(1, 5, 0, 0));
+        panelFooter.setBackground(new Color(206, 43, 55)); // Rosso bandiera italiana
+        panelFooter.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+
+        Color coloreSidebar = new Color(45, 52, 54);
+        JPanel btnNuovoFornitore = creaBottoneConIcona("👥", "Nuovo Fornitore", coloreSidebar, e -> mostraDialogNuovoFornitore());
+        JPanel btnNuovoOrdine = creaBottoneConIcona("📦", "Nuovo Ordine", coloreSidebar, e -> mostraDialogNuovoOrdine());
+        JPanel btnModificaStato = creaBottoneConIcona("✏️", "Modifica Stato", coloreSidebar, e -> mostraDialogModificaStato());
+        JPanel btnElimina = creaBottoneConIcona("🗑️", "Elimina", coloreSidebar, e -> eliminaOrdine());
+        JPanel btnAggiorna = creaBottoneConIcona("🔄", "Aggiorna", coloreSidebar, e -> {
+            caricaFornitori();
+            caricaOrdini();
+        });
+
+        panelFooter.add(btnNuovoFornitore);
+        panelFooter.add(btnNuovoOrdine);
+        panelFooter.add(btnModificaStato);
+        panelFooter.add(btnElimina);
+        panelFooter.add(btnAggiorna);
+
+        add(panelFooter, BorderLayout.SOUTH);
+
         // Carica dati iniziali
         caricaFornitori();
         caricaOrdini();
-        aggiornaStatistiche();
     }
     
     private JPanel creaPannelloFornitori() {
@@ -106,35 +125,29 @@ public class SchermataOrdini extends JPanel {
         tableFornitori.setRowHeight(28);
         tableFornitori.setFont(new Font("Arial", Font.PLAIN, 13));
         tableFornitori.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        
+
+        // Renderer per righe zebrate
+        Color rigaPari = Color.WHITE;
+        Color rigaDispari = new Color(245, 245, 245);
+        DefaultTableCellRenderer zebraRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rigaPari : rigaDispari);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tableFornitori.getColumnCount(); i++) {
+            tableFornitori.getColumnModel().getColumn(i).setCellRenderer(zebraRenderer);
+        }
+
         JScrollPane scrollPane = new JScrollPane(tableFornitori);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Pulsanti gestione fornitori
-        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelPulsanti.setBackground(Color.WHITE);
-        
-        JButton btnNuovo = creaBottone("➕ Nuovo Fornitore", new Color(46, 204, 113));
-        JButton btnModifica = creaBottone("✏️ Modifica", new Color(52, 152, 219));
-        JButton btnElimina = creaBottone("❌ Elimina", new Color(231, 76, 60));
-        JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(149, 165, 166));
-        
-        btnNuovo.addActionListener(e -> mostraDialogNuovoFornitore());
-        btnModifica.addActionListener(e -> mostraDialogModificaFornitore());
-        btnElimina.addActionListener(e -> eliminaFornitore());
-        btnAggiorna.addActionListener(e -> {
-            caricaFornitori();
-            caricaOrdini();
-            aggiornaStatistiche();
-        });
-        
-        panelPulsanti.add(btnNuovo);
-        panelPulsanti.add(btnModifica);
-        panelPulsanti.add(btnElimina);
-        panelPulsanti.add(btnAggiorna);
-        
-        panel.add(panelPulsanti, BorderLayout.SOUTH);
-        
+
         return panel;
     }
     
@@ -160,7 +173,26 @@ public class SchermataOrdini extends JPanel {
         tableOrdini.setRowHeight(28);
         tableOrdini.setFont(new Font("Arial", Font.PLAIN, 13));
         tableOrdini.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        
+
+        // Renderer per righe zebrate
+        Color rigaPari = Color.WHITE;
+        Color rigaDispari = new Color(245, 245, 245);
+        DefaultTableCellRenderer zebraRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rigaPari : rigaDispari);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tableOrdini.getColumnCount(); i++) {
+            tableOrdini.getColumnModel().getColumn(i).setCellRenderer(zebraRenderer);
+        }
+
         // Listener per mostrare dettaglio quando si seleziona un ordine
         tableOrdini.getSelectionModel().addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
@@ -170,31 +202,7 @@ public class SchermataOrdini extends JPanel {
         
         JScrollPane scrollPane = new JScrollPane(tableOrdini);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Pulsanti gestione ordini
-        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelPulsanti.setBackground(Color.WHITE);
-        
-        JButton btnNuovo = creaBottone("➕ Nuovo Ordine", new Color(46, 204, 113));
-        JButton btnModifica = creaBottone("✏️ Modifica Stato", new Color(52, 152, 219));
-        JButton btnElimina = creaBottone("❌ Elimina", new Color(231, 76, 60));
-        JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(149, 165, 166));
-        
-        btnNuovo.addActionListener(e -> mostraDialogNuovoOrdine());
-        btnModifica.addActionListener(e -> mostraDialogModificaStato());
-        btnElimina.addActionListener(e -> eliminaOrdine());
-        btnAggiorna.addActionListener(e -> {
-            caricaOrdini();
-            aggiornaStatistiche();
-        });
-        
-        panelPulsanti.add(btnNuovo);
-        panelPulsanti.add(btnModifica);
-        panelPulsanti.add(btnElimina);
-        panelPulsanti.add(btnAggiorna);
-        
-        panel.add(panelPulsanti, BorderLayout.SOUTH);
-        
+
         return panel;
     }
     
@@ -220,23 +228,108 @@ public class SchermataOrdini extends JPanel {
         tableDettaglio.setRowHeight(28);
         tableDettaglio.setFont(new Font("Arial", Font.PLAIN, 13));
         tableDettaglio.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        
+
+        // Renderer per righe zebrate
+        Color rigaPari = Color.WHITE;
+        Color rigaDispari = new Color(245, 245, 245);
+        DefaultTableCellRenderer zebraRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rigaPari : rigaDispari);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tableDettaglio.getColumnCount(); i++) {
+            tableDettaglio.getColumnModel().getColumn(i).setCellRenderer(zebraRenderer);
+        }
+
         JScrollPane scrollPane = new JScrollPane(tableDettaglio);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         return panel;
     }
     
-    private JButton creaBottone(String testo, Color colore) {
-        JButton btn = new JButton(testo);
-        btn.setBackground(colore);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(160, 35));
-        return btn;
+    private JPanel creaBottoneConIcona(String icona, String testo, Color coloreIcona, java.awt.event.ActionListener action) {
+        JPanel panel = new JPanel() {
+            private boolean showShadow = false;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (showShadow) {
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int shadowSize = 4;
+                    for (int i = 0; i < shadowSize; i++) {
+                        int alpha = 50 - (i * 12);
+                        if (alpha < 0) alpha = 0;
+                        g2d.setColor(new Color(0, 0, 0, alpha));
+                        g2d.fillRoundRect(i + 2, i + 2, getWidth() - i - 2, getHeight() - i - 2, 5, 5);
+                    }
+                    g2d.dispose();
+                }
+            }
+
+            @SuppressWarnings("unused")
+            public void setShadow(boolean show) {
+                this.showShadow = show;
+                repaint();
+            }
+        };
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(new Color(206, 43, 55));
+        panel.setOpaque(false);
+
+        JLabel lblIcona = new JLabel(icona);
+        lblIcona.setOpaque(true);
+        lblIcona.setBackground(coloreIcona);
+        lblIcona.setForeground(Color.WHITE);
+        lblIcona.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        lblIcona.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcona.setPreferredSize(new Dimension(35, 35));
+        lblIcona.setMinimumSize(new Dimension(35, 35));
+        lblIcona.setMaximumSize(new Dimension(35, 35));
+        lblIcona.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(lblIcona);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        JLabel lblTesto = new JLabel("<html><span>" + testo + "</span></html>");
+        lblTesto.setForeground(Color.WHITE);
+        lblTesto.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+        lblTesto.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTesto.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(lblTesto);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                action.actionPerformed(null);
+            }
+            public void mouseEntered(MouseEvent e) {
+                lblTesto.setText("<html><u>" + testo + "</u></html>");
+                try {
+                    java.lang.reflect.Method m = panel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(panel, true);
+                } catch (Exception ex) {}
+            }
+            public void mouseExited(MouseEvent e) {
+                lblTesto.setText("<html><span>" + testo + "</span></html>");
+                try {
+                    java.lang.reflect.Method m = panel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(panel, false);
+                } catch (Exception ex) {}
+            }
+        });
+
+        return panel;
     }
     
     private void caricaFornitori() {
@@ -303,24 +396,7 @@ public class SchermataOrdini extends JPanel {
         }
     }
     
-    private void aggiornaStatistiche() {
-        List<Ordine> listaOrdini = ordineDAO.getAll();
-        List<Fornitore> listaFornitori = fornitoreDAO.getAll();
-        int ordiniPendenti = 0;
-        double totaleOrdini = 0.0;
-        
-        for (Ordine ordine : listaOrdini) {
-            if ("PENDENTE".equals(ordine.getStato()) || "IN_LAVORAZIONE".equals(ordine.getStato())) {
-                ordiniPendenti++;
-            }
-            totaleOrdini += ordine.getTotale();
-        }
-        
-        lblStatistiche.setText(String.format(Locale.ITALIAN, "Fornitori: %d | Ordini: %d | Pendenti: %d | Totale: %,.2f €", 
-            listaFornitori.size(), listaOrdini.size(), ordiniPendenti, totaleOrdini));
-    }
-    
-    // ========== GESTIONE FORNITORI ==========
+// ========== GESTIONE FORNITORI ==========
     
     private void mostraDialogNuovoFornitore() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Nuovo Fornitore", true);
@@ -383,8 +459,7 @@ public class SchermataOrdini extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "✅ Fornitore creato con successo!");
                 dialog.dispose();
                 caricaFornitori();
-                aggiornaStatistiche();
-            } else {
+                            } else {
                 JOptionPane.showMessageDialog(dialog, "❌ Errore nel salvare il fornitore!");
             }
         });
@@ -473,8 +548,7 @@ public class SchermataOrdini extends JPanel {
                 dialog.dispose();
                 caricaFornitori();
                 caricaOrdini();
-                aggiornaStatistiche();
-            } else {
+                            } else {
                 JOptionPane.showMessageDialog(dialog, "❌ Errore nell'aggiornare il fornitore!");
             }
         });
@@ -521,8 +595,7 @@ public class SchermataOrdini extends JPanel {
             if (fornitoreDAO.elimina(id)) {
                 JOptionPane.showMessageDialog(this, "✅ Fornitore eliminato con successo!");
                 caricaFornitori();
-                aggiornaStatistiche();
-            } else {
+                            } else {
                 JOptionPane.showMessageDialog(this, "❌ Errore nell'eliminare il fornitore!");
             }
         }
@@ -542,7 +615,7 @@ public class SchermataOrdini extends JPanel {
         
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Nuovo Ordine", true);
         dialog.setLayout(new BorderLayout(10, 10));
-        dialog.setSize(700, 500);
+        dialog.setSize(750, 550);
         dialog.setLocationRelativeTo(this);
         
         JPanel panelDati = new JPanel(new GridLayout(3, 2, 10, 10));
@@ -574,16 +647,34 @@ public class SchermataOrdini extends JPanel {
         JScrollPane scrollRighe = new JScrollPane(tableRighe);
         panelRighe.add(scrollRighe, BorderLayout.CENTER);
         
-        JPanel panelAggiungiRiga = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel panelAggiungiRiga = new JPanel(new GridLayout(2, 4, 10, 10));
+        panelAggiungiRiga.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelAggiungiRiga.setBackground(new Color(240, 248, 255)); // Sfondo azzurro chiaro
+
         JComboBox<String> cmbAuto = new JComboBox<>();
         List<Auto> listaAuto = autoDAO.getAll();
         for (Auto a : listaAuto) {
             cmbAuto.addItem(a.getId() + " - " + a.getMarca() + " " + a.getModello());
         }
-        
-        JTextField txtQuantita = new JTextField(5);
-        JTextField txtPrezzo = new JTextField(8);
-        JButton btnAggiungiRiga = new JButton("➕ Aggiungi");
+
+        JTextField txtQuantita = new JTextField();
+        JTextField txtPrezzo = new JTextField();
+        JButton btnAggiungiRiga = new JButton("➕ AGGIUNGI RIGA");
+        btnAggiungiRiga.setBackground(new Color(46, 204, 113));
+        btnAggiungiRiga.setForeground(Color.WHITE);
+        btnAggiungiRiga.setFont(new Font("Arial", Font.BOLD, 14));
+
+        // Prima riga: etichette
+        panelAggiungiRiga.add(new JLabel("Auto:"));
+        panelAggiungiRiga.add(new JLabel("Quantità:"));
+        panelAggiungiRiga.add(new JLabel("Prezzo Unit. €:"));
+        panelAggiungiRiga.add(new JLabel("")); // Placeholder
+
+        // Seconda riga: campi input e pulsante
+        panelAggiungiRiga.add(cmbAuto);
+        panelAggiungiRiga.add(txtQuantita);
+        panelAggiungiRiga.add(txtPrezzo);
+        panelAggiungiRiga.add(btnAggiungiRiga);
         
         btnAggiungiRiga.addActionListener(e -> {
             try {
@@ -600,16 +691,8 @@ public class SchermataOrdini extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "❌ Inserisci valori validi!");
             }
         });
-        
-        panelAggiungiRiga.add(new JLabel("Auto:"));
-        panelAggiungiRiga.add(cmbAuto);
-        panelAggiungiRiga.add(new JLabel("Qnt:"));
-        panelAggiungiRiga.add(txtQuantita);
-        panelAggiungiRiga.add(new JLabel("Prezzo:"));
-        panelAggiungiRiga.add(txtPrezzo);
-        panelAggiungiRiga.add(btnAggiungiRiga);
-        
-        panelRighe.add(panelAggiungiRiga, BorderLayout.SOUTH);
+
+        panelRighe.add(panelAggiungiRiga, BorderLayout.NORTH);
         dialog.add(panelRighe, BorderLayout.CENTER);
 
         // Pannello pulsanti
@@ -675,8 +758,7 @@ public class SchermataOrdini extends JPanel {
                     JOptionPane.showMessageDialog(dialog, "✅ Ordine creato con successo!");
                     dialog.dispose();
                     caricaOrdini();
-                    aggiornaStatistiche();
-                } else {
+                                    } else {
                     JOptionPane.showMessageDialog(dialog, "❌ Errore nel creare l'ordine!");
                 }
             } catch (Exception ex) {
@@ -728,8 +810,7 @@ public class SchermataOrdini extends JPanel {
                 if (ordineDAO.aggiorna(ordine)) {
                     JOptionPane.showMessageDialog(this, "✅ Stato aggiornato con successo!");
                     caricaOrdini();
-                    aggiornaStatistiche();
-                } else {
+                                    } else {
                     JOptionPane.showMessageDialog(this, "❌ Errore nell'aggiornare lo stato!");
                 }
             }
@@ -765,8 +846,7 @@ public class SchermataOrdini extends JPanel {
                 JOptionPane.showMessageDialog(this, "✅ Ordine eliminato con successo!");
                 caricaOrdini();
                 modelDettaglio.setRowCount(0); // Pulisce il dettaglio
-                aggiornaStatistiche();
-            } else {
+                            } else {
                 JOptionPane.showMessageDialog(this, "❌ Errore nell'eliminare l'ordine!");
             }
         }

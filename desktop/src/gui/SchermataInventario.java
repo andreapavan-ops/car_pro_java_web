@@ -5,8 +5,11 @@ import dao.MovimentoDAO;
 import model.Auto;
 import model.Movimento;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -17,31 +20,24 @@ public class SchermataInventario extends JPanel {
     private DefaultTableModel modelMovimenti;
     private AutoDAO autoDAO;
     private MovimentoDAO movimentoDAO;
-    private JLabel lblAlertScorte;
-    
+
     public SchermataInventario() {
         autoDAO = new AutoDAO();
         movimentoDAO = new MovimentoDAO();
-        
+
         setLayout(new BorderLayout(0, 0));
         setBackground(Color.WHITE);
-        
+
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(52, 152, 219));
+        headerPanel.setBackground(new Color(0, 146, 70));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
         JLabel titolo = new JLabel("Inventario Auto");
         titolo.setFont(new Font("Arial", Font.BOLD, 28));
         titolo.setForeground(Color.WHITE);
 
-        // Label per alert scorte minime
-        lblAlertScorte = new JLabel();
-        lblAlertScorte.setFont(new Font("Arial", Font.BOLD, 14));
-        lblAlertScorte.setForeground(Color.YELLOW);
-
-        headerPanel.add(titolo, BorderLayout.WEST);
-        headerPanel.add(lblAlertScorte, BorderLayout.EAST);
+        headerPanel.add(titolo, BorderLayout.CENTER);
         add(headerPanel, BorderLayout.NORTH);
         
         // Split panel per dividere giacenze e movimenti
@@ -56,14 +52,32 @@ public class SchermataInventario extends JPanel {
         // Pannello movimenti (sotto)
         JPanel panelMovimenti = creaPannelloMovimenti();
         splitPane.setBottomComponent(panelMovimenti);
-        
+
         add(splitPane, BorderLayout.CENTER);
-        
+
+        // Footer con pulsanti stile Catalogo
+        JPanel panelPulsanti = new JPanel(new GridLayout(1, 3, 0, 0));
+        panelPulsanti.setBackground(new Color(206, 43, 55)); // Rosso bandiera italiana
+        panelPulsanti.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+
+        Color coloreSidebar = new Color(45, 52, 54);
+        JPanel btnCarico = creaBottoneConIcona("+", "Carico", coloreSidebar, e -> mostraDialogMovimento("CARICO"));
+        JPanel btnScarico = creaBottoneConIcona("-", "Scarico", coloreSidebar, e -> mostraDialogMovimento("SCARICO"));
+        JPanel btnAggiorna = creaBottoneConIcona("🔄", "Aggiorna", coloreSidebar, e -> {
+            caricaGiacenze();
+            caricaMovimenti();
+                    });
+
+        panelPulsanti.add(btnCarico);
+        panelPulsanti.add(btnScarico);
+        panelPulsanti.add(btnAggiorna);
+
+        add(panelPulsanti, BorderLayout.SOUTH);
+
         // Carica dati iniziali
         caricaGiacenze();
         caricaMovimenti();
-        verificaScorteMinime();
-    }
+            }
     
     private JPanel creaPannelloGiacenze() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -87,32 +101,29 @@ public class SchermataInventario extends JPanel {
         tableGiacenze.setRowHeight(28);
         tableGiacenze.setFont(new Font("Arial", Font.PLAIN, 13));
         tableGiacenze.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        
+
+        // Renderer per righe zebrate
+        Color rigaPari = Color.WHITE;
+        Color rigaDispari = new Color(245, 245, 245);
+        DefaultTableCellRenderer zebraRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rigaPari : rigaDispari);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tableGiacenze.getColumnCount(); i++) {
+            tableGiacenze.getColumnModel().getColumn(i).setCellRenderer(zebraRenderer);
+        }
+
         JScrollPane scrollPane = new JScrollPane(tableGiacenze);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Pulsanti gestione giacenze
-        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelPulsanti.setBackground(Color.WHITE);
-        
-        JButton btnCarico = creaBottone("➕ Carico", new Color(46, 204, 113));
-        JButton btnScarico = creaBottone("➖ Scarico", new Color(231, 76, 60));
-        JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(52, 152, 219));
-        
-        btnCarico.addActionListener(e -> mostraDialogMovimento("CARICO"));
-        btnScarico.addActionListener(e -> mostraDialogMovimento("SCARICO"));
-        btnAggiorna.addActionListener(e -> {
-            caricaGiacenze();
-            caricaMovimenti();
-            verificaScorteMinime();
-        });
-        
-        panelPulsanti.add(btnCarico);
-        panelPulsanti.add(btnScarico);
-        panelPulsanti.add(btnAggiorna);
-        
-        panel.add(panelPulsanti, BorderLayout.SOUTH);
-        
+
         return panel;
     }
     
@@ -138,23 +149,113 @@ public class SchermataInventario extends JPanel {
         tableMovimenti.setRowHeight(28);
         tableMovimenti.setFont(new Font("Arial", Font.PLAIN, 13));
         tableMovimenti.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        
+
+        // Renderer per righe zebrate
+        Color rigaPari = Color.WHITE;
+        Color rigaDispari = new Color(245, 245, 245);
+        DefaultTableCellRenderer zebraRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rigaPari : rigaDispari);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tableMovimenti.getColumnCount(); i++) {
+            tableMovimenti.getColumnModel().getColumn(i).setCellRenderer(zebraRenderer);
+        }
+
         JScrollPane scrollPane = new JScrollPane(tableMovimenti);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
+
         return panel;
     }
     
-    private JButton creaBottone(String testo, Color colore) {
-        JButton btn = new JButton(testo);
-        btn.setBackground(colore);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(150, 35));
-        return btn;
+    private JPanel creaBottoneConIcona(String icona, String testo, Color coloreIcona, java.awt.event.ActionListener action) {
+        JPanel panel = new JPanel() {
+            private boolean showShadow = false;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (showShadow) {
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int shadowSize = 4;
+                    for (int i = 0; i < shadowSize; i++) {
+                        int alpha = 50 - (i * 12);
+                        if (alpha < 0) alpha = 0;
+                        g2d.setColor(new Color(0, 0, 0, alpha));
+                        g2d.fillRoundRect(i + 2, i + 2, getWidth() - i - 2, getHeight() - i - 2, 5, 5);
+                    }
+                    g2d.dispose();
+                }
+            }
+
+            @SuppressWarnings("unused")
+            public void setShadow(boolean show) {
+                this.showShadow = show;
+                repaint();
+            }
+        };
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(new Color(206, 43, 55));
+        panel.setOpaque(false);
+
+        JLabel lblIcona = new JLabel(icona);
+        lblIcona.setOpaque(true);
+        lblIcona.setBackground(coloreIcona);
+        lblIcona.setForeground(Color.WHITE);
+        // Per + e - usa font più grande e bold
+        if (icona.equals("+") || icona.equals("-")) {
+            lblIcona.setFont(new Font("Arial", Font.BOLD, 28));
+        } else {
+            lblIcona.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        }
+        lblIcona.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcona.setPreferredSize(new Dimension(35, 35));
+        lblIcona.setMinimumSize(new Dimension(35, 35));
+        lblIcona.setMaximumSize(new Dimension(35, 35));
+        lblIcona.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(lblIcona);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        JLabel lblTesto = new JLabel("<html><span>" + testo + "</span></html>");
+        lblTesto.setForeground(Color.WHITE);
+        lblTesto.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+        lblTesto.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTesto.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(lblTesto);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                action.actionPerformed(null);
+            }
+            public void mouseEntered(MouseEvent e) {
+                lblTesto.setText("<html><u>" + testo + "</u></html>");
+                try {
+                    java.lang.reflect.Method m = panel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(panel, true);
+                } catch (Exception ex) {}
+            }
+            public void mouseExited(MouseEvent e) {
+                lblTesto.setText("<html><span>" + testo + "</span></html>");
+                try {
+                    java.lang.reflect.Method m = panel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(panel, false);
+                } catch (Exception ex) {}
+            }
+        });
+
+        return panel;
     }
     
     private void caricaGiacenze() {
@@ -206,22 +307,14 @@ public class SchermataInventario extends JPanel {
         }
     }
     
-    private void verificaScorteMinime() {
-        List<Auto> listaAuto = autoDAO.getAll();
-        int contaAllert = 0;
-        
-        for (Auto auto : listaAuto) {
-            if (auto.getGiacenza() <= auto.getScortaMinima()) {
-                contaAllert++;
+/**
+     * Metodo pubblico per aggiornare i dati della schermata.
+     * Chiamato automaticamente quando si passa a questa schermata.
+     */
+    public void refresh() {
+        caricaGiacenze();
+        caricaMovimenti();
             }
-        }
-        
-        if (contaAllert > 0) {
-            lblAlertScorte.setText("⚠️ " + contaAllert + " auto sotto scorta minima!");
-        } else {
-            lblAlertScorte.setText("✅ Tutte le giacenze OK");
-        }
-    }
     
     private void mostraDialogMovimento(String tipo) {
         int selectedRow = tableGiacenze.getSelectedRow();
@@ -229,50 +322,52 @@ public class SchermataInventario extends JPanel {
             JOptionPane.showMessageDialog(this, "⚠️ Seleziona un'auto dalla tabella!");
             return;
         }
-        
+
         int idAuto = (int) modelGiacenze.getValueAt(selectedRow, 0);
         String marca = (String) modelGiacenze.getValueAt(selectedRow, 1);
         String modello = (String) modelGiacenze.getValueAt(selectedRow, 2);
         int giacenzaAttuale = (int) modelGiacenze.getValueAt(selectedRow, 3);
-        
-        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), 
+
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this),
             tipo + " - " + marca + " " + modello, true);
-        dialog.setLayout(new GridLayout(4, 2, 10, 10));
         dialog.setSize(400, 200);
         dialog.setLocationRelativeTo(this);
-        
+
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
         JLabel lblGiacenza = new JLabel("Giacenza attuale: " + giacenzaAttuale);
         lblGiacenza.setFont(new Font("Arial", Font.BOLD, 14));
-        
+
         JTextField txtQuantita = new JTextField();
         JTextField txtCausale = new JTextField();
-        
-        dialog.add(lblGiacenza);
-        dialog.add(new JLabel(""));
-        dialog.add(new JLabel("Quantità:"));
-        dialog.add(txtQuantita);
-        dialog.add(new JLabel("Causale:"));
-        dialog.add(txtCausale);
-        
+
+        panel.add(lblGiacenza);
+        panel.add(new JLabel(""));
+        panel.add(new JLabel("Quantità:"));
+        panel.add(txtQuantita);
+        panel.add(new JLabel("Causale:"));
+        panel.add(txtCausale);
+
         JButton btnSalva = new JButton("Salva");
         JButton btnAnnulla = new JButton("Annulla");
-        
+
         btnSalva.addActionListener(e -> {
             try {
                 int quantita = Integer.parseInt(txtQuantita.getText());
-                
+
                 if (quantita <= 0) {
                     JOptionPane.showMessageDialog(dialog, "❌ La quantità deve essere maggiore di zero!");
                     return;
                 }
-                
+
                 // Verifica scorte per scarico
                 if (tipo.equals("SCARICO") && quantita > giacenzaAttuale) {
-                    JOptionPane.showMessageDialog(dialog, 
+                    JOptionPane.showMessageDialog(dialog,
                         "❌ Quantità non disponibile! Giacenza attuale: " + giacenzaAttuale);
                     return;
                 }
-                
+
                 // Calcola nuova giacenza
                 int nuovaGiacenza;
                 if (tipo.equals("CARICO")) {
@@ -280,12 +375,12 @@ public class SchermataInventario extends JPanel {
                 } else {
                     nuovaGiacenza = giacenzaAttuale - quantita;
                 }
-                
+
                 // Crea movimento con il costruttore corretto
                 Movimento movimento = new Movimento(idAuto, tipo, quantita, txtCausale.getText());
                 movimento.setGiacenzaPrecedente(giacenzaAttuale);
                 movimento.setGiacenzaSuccessiva(nuovaGiacenza);
-                
+
                 if (movimentoDAO.inserisci(movimento)) {
                     // Aggiorna giacenza auto
                     Auto auto = autoDAO.getById(idAuto);
@@ -293,25 +388,25 @@ public class SchermataInventario extends JPanel {
                         auto.setGiacenza(nuovaGiacenza);
                         autoDAO.aggiorna(auto);
                     }
-                    
+
                     JOptionPane.showMessageDialog(dialog, "✅ Movimento registrato con successo!");
                     dialog.dispose();
                     caricaGiacenze();
                     caricaMovimenti();
-                    verificaScorteMinime();
-                } else {
+                                    } else {
                     JOptionPane.showMessageDialog(dialog, "❌ Errore nel salvare il movimento!");
                 }
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(dialog, "❌ Inserisci una quantità valida!");
             }
         });
-        
+
         btnAnnulla.addActionListener(e -> dialog.dispose());
-        
-        dialog.add(btnSalva);
-        dialog.add(btnAnnulla);
-        
+
+        panel.add(btnSalva);
+        panel.add(btnAnnulla);
+
+        dialog.add(panel);
         dialog.setVisible(true);
     }
 }

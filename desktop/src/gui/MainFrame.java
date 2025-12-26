@@ -60,7 +60,27 @@ public class MainFrame extends JFrame {
         sidebar.add(creaBottoneSidebar("\uD83D\uDDBC", "Immagini", e -> mostraImmagini()));
         
         sidebar.add(Box.createVerticalGlue());
-        
+
+        // Logo in basso a sinistra
+        JLabel lblLogo = new JLabel();
+        lblLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblLogo.setBorder(BorderFactory.createEmptyBorder(10, 20, 15, 0));
+        java.io.File fileLogo = new java.io.File("resources/images/logo.jpeg");
+        if (fileLogo.exists()) {
+            ImageIcon icon = new ImageIcon(fileLogo.getAbsolutePath());
+            // Ridimensiona il logo a 80x60 mantenendo le proporzioni
+            int maxW = 80;
+            int maxH = 60;
+            int imgW = icon.getIconWidth();
+            int imgH = icon.getIconHeight();
+            double ratio = Math.min((double) maxW / imgW, (double) maxH / imgH);
+            int newW = (int) (imgW * ratio);
+            int newH = (int) (imgH * ratio);
+            Image img = icon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+            lblLogo.setIcon(new ImageIcon(img));
+        }
+        sidebar.add(lblLogo);
+
         return sidebar;
     }
     
@@ -154,22 +174,26 @@ public class MainFrame extends JFrame {
         contentPanel.removeAll();
         if (schermataCatalogo == null) {
             schermataCatalogo = new SchermataCatalogo();
+        } else {
+            schermataCatalogo.refresh(); // Aggiorna dati dal database
         }
         contentPanel.add(schermataCatalogo, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
-    
+
     private void mostraInventario() {
         contentPanel.removeAll();
         if (schermataInventario == null) {
             schermataInventario = new SchermataInventario();
+        } else {
+            schermataInventario.refresh(); // Aggiorna dati dal database
         }
         contentPanel.add(schermataInventario, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
-    
+
     private void mostraOrdini() {
         contentPanel.removeAll();
         if (schermataOrdini == null) {
@@ -179,18 +203,19 @@ public class MainFrame extends JFrame {
         contentPanel.revalidate();
         contentPanel.repaint();
     }
-    
+
     private void mostraVendite() {
         contentPanel.removeAll();
         if (schermataStatistiche == null) {
             schermataStatistiche = new SchermataStatistiche();
+        } else {
+            schermataStatistiche.refresh(); // Aggiorna dati dal database
         }
         contentPanel.add(schermataStatistiche, BorderLayout.CENTER);
         contentPanel.revalidate();
         contentPanel.repaint();
     }
-    
-    // ✅ NUOVO METODO
+
     private void mostraImmagini() {
         contentPanel.removeAll();
         if (schermataImmagini == null) {

@@ -345,7 +345,10 @@ public class SchermataCatalogo extends JPanel {
         panelInfo.add(creaLabel(auto.getModello(), fontValue));
         
         panelInfo.add(creaLabel("🔖 Targa:", fontLabel));
-        panelInfo.add(creaLabel(auto.getTarga(), fontValue));
+        String targaDettaglio = (auto.getTarga() == null || auto.getTarga().trim().isEmpty())
+            ? "Da immatricolare"
+            : auto.getTarga();
+        panelInfo.add(creaLabel(targaDettaglio, fontValue));
         
         panelInfo.add(creaLabel("📅 Anno:", fontLabel));
         panelInfo.add(creaLabel(String.valueOf(auto.getAnno()), fontValue));
@@ -515,13 +518,18 @@ public class SchermataCatalogo extends JPanel {
     private void caricaAuto() {
         tableModel.setRowCount(0);
         List<Auto> listaAuto = autoDAO.getAll();
-        
+
         for (Auto auto : listaAuto) {
+            // Se la targa è vuota o null, mostra "Da immatricolare"
+            String targa = (auto.getTarga() == null || auto.getTarga().trim().isEmpty())
+                ? "Da immatricolare"
+                : auto.getTarga().toUpperCase();
+
             Object[] row = {
                 auto.getId(),
                 auto.getMarca().toUpperCase(),
                 auto.getModello().toUpperCase(),
-                auto.getTarga().toUpperCase(),
+                targa,
                 auto.getAnno(),
                 String.format(Locale.ITALIAN, "%,.2f", auto.getPrezzo()),
                 auto.getGiacenza(),
@@ -529,8 +537,16 @@ public class SchermataCatalogo extends JPanel {
             };
             tableModel.addRow(row);
         }
-        
+
         grigliaAuto.caricaAuto(listaAuto);
+    }
+
+    /**
+     * Metodo pubblico per aggiornare i dati della schermata.
+     * Chiamato automaticamente quando si passa a questa schermata.
+     */
+    public void refresh() {
+        caricaAuto();
     }
 
     private JPanel creaBottoneConIcona(String icona, String testo, Color coloreIcona, java.awt.event.ActionListener action) {
@@ -705,10 +721,12 @@ public class SchermataCatalogo extends JPanel {
 
     private void mostraDialogAggiungi() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Aggiungi Auto", true);
-        dialog.setLayout(new GridLayout(9, 2, 10, 10));
         dialog.setSize(500, 450);
         dialog.setLocationRelativeTo(this);
-        
+
+        JPanel panel = new JPanel(new GridLayout(9, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
         JTextField txtMarca = new JTextField();
         JTextField txtModello = new JTextField();
         JTextField txtTarga = new JTextField();
@@ -716,7 +734,7 @@ public class SchermataCatalogo extends JPanel {
         JTextField txtPrezzo = new JTextField();
         JTextField txtGiacenza = new JTextField("0");
         JTextField txtScortaMin = new JTextField("5");
-        
+
         JTextField txtImmagine = new JTextField();
         txtImmagine.setEditable(false);
         JButton btnSfogliaImmagine = new JButton("📁 Sfoglia");
@@ -726,39 +744,42 @@ public class SchermataCatalogo extends JPanel {
                 txtImmagine.setText(nomeFile);
             }
         });
-        
+
         JPanel panelImmagine = new JPanel(new BorderLayout(5, 0));
         panelImmagine.add(txtImmagine, BorderLayout.CENTER);
         panelImmagine.add(btnSfogliaImmagine, BorderLayout.EAST);
-        
-        dialog.add(new JLabel("Marca:"));
-        dialog.add(txtMarca);
-        dialog.add(new JLabel("Modello:"));
-        dialog.add(txtModello);
-        dialog.add(new JLabel("Targa:"));
-        dialog.add(txtTarga);
-        dialog.add(new JLabel("Anno:"));
-        dialog.add(txtAnno);
-        dialog.add(new JLabel("Prezzo €:"));
-        dialog.add(txtPrezzo);
-        dialog.add(new JLabel("Giacenza:"));
-        dialog.add(txtGiacenza);
-        dialog.add(new JLabel("Scorta Minima:"));
-        dialog.add(txtScortaMin);
-        dialog.add(new JLabel("Immagine:"));
-        dialog.add(panelImmagine);
-        
+
+        panel.add(new JLabel("Marca:"));
+        panel.add(txtMarca);
+        panel.add(new JLabel("Modello:"));
+        panel.add(txtModello);
+        panel.add(new JLabel("Targa (opzionale):"));
+        panel.add(txtTarga);
+        panel.add(new JLabel("Anno:"));
+        panel.add(txtAnno);
+        panel.add(new JLabel("Prezzo €:"));
+        panel.add(txtPrezzo);
+        panel.add(new JLabel("Giacenza:"));
+        panel.add(txtGiacenza);
+        panel.add(new JLabel("Scorta Minima:"));
+        panel.add(txtScortaMin);
+        panel.add(new JLabel("Immagine:"));
+        panel.add(panelImmagine);
+
         JButton btnSalva = new JButton("Salva");
         JButton btnAnnulla = new JButton("Annulla");
-        
+
         btnSalva.addActionListener(e -> {
             try {
+                // Parsing prezzo: rimuovi punti migliaia, sostituisci virgola con punto
+                String prezzoStr = txtPrezzo.getText().replace(".", "").replace(",", ".");
+
                 Auto auto = new Auto(
                     txtMarca.getText(),
                     txtModello.getText(),
                     txtTarga.getText(),
                     Integer.parseInt(txtAnno.getText()),
-                    Double.parseDouble(txtPrezzo.getText().replace(",", ".")),
+                    Double.parseDouble(prezzoStr),
                     Integer.parseInt(txtGiacenza.getText()),
                     Integer.parseInt(txtScortaMin.getText()),
                     txtImmagine.getText().isEmpty() ? null : txtImmagine.getText()
@@ -773,38 +794,45 @@ public class SchermataCatalogo extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "❌ Errore: " + ex.getMessage());
             }
         });
-        
+
         btnAnnulla.addActionListener(e -> dialog.dispose());
-        
-        dialog.add(btnSalva);
-        dialog.add(btnAnnulla);
-        
+
+        panel.add(btnSalva);
+        panel.add(btnAnnulla);
+
+        dialog.add(panel);
         dialog.setVisible(true);
     }
-    
+
     private void mostraDialogModifica() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow == -1) {
             JOptionPane.showMessageDialog(this, "⚠️ Seleziona un'auto da modificare!");
             return;
         }
-        
+
         int id = (int) tableModel.getValueAt(selectedRow, 0);
         Auto autoCorrente = autoDAO.getById(id);
-        
+
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Modifica Auto", true);
-        dialog.setLayout(new GridLayout(9, 2, 10, 10));
         dialog.setSize(500, 450);
         dialog.setLocationRelativeTo(this);
-        
+
+        JPanel panel = new JPanel(new GridLayout(9, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
         JTextField txtMarca = new JTextField((String) tableModel.getValueAt(selectedRow, 1));
         JTextField txtModello = new JTextField((String) tableModel.getValueAt(selectedRow, 2));
-        JTextField txtTarga = new JTextField((String) tableModel.getValueAt(selectedRow, 3));
+        // Se la targa è "Da immatricolare", lascia il campo vuoto
+        String targaCorrente = (String) tableModel.getValueAt(selectedRow, 3);
+        JTextField txtTarga = new JTextField(
+            "Da immatricolare".equals(targaCorrente) ? "" : targaCorrente
+        );
         JTextField txtAnno = new JTextField(String.valueOf(tableModel.getValueAt(selectedRow, 4)));
         JTextField txtPrezzo = new JTextField((String) tableModel.getValueAt(selectedRow, 5));
         JTextField txtGiacenza = new JTextField(String.valueOf(tableModel.getValueAt(selectedRow, 6)));
         JTextField txtScortaMin = new JTextField(String.valueOf(tableModel.getValueAt(selectedRow, 7)));
-        
+
         JTextField txtImmagine = new JTextField(autoCorrente != null && autoCorrente.getImmagine() != null ? autoCorrente.getImmagine() : "");
         txtImmagine.setEditable(false);
         JButton btnSfogliaImmagine = new JButton("📁 Sfoglia");
@@ -814,45 +842,48 @@ public class SchermataCatalogo extends JPanel {
                 txtImmagine.setText(nomeFile);
             }
         });
-        
+
         JPanel panelImmagine = new JPanel(new BorderLayout(5, 0));
         panelImmagine.add(txtImmagine, BorderLayout.CENTER);
         panelImmagine.add(btnSfogliaImmagine, BorderLayout.EAST);
-        
-        dialog.add(new JLabel("Marca:"));
-        dialog.add(txtMarca);
-        dialog.add(new JLabel("Modello:"));
-        dialog.add(txtModello);
-        dialog.add(new JLabel("Targa:"));
-        dialog.add(txtTarga);
-        dialog.add(new JLabel("Anno:"));
-        dialog.add(txtAnno);
-        dialog.add(new JLabel("Prezzo €:"));
-        dialog.add(txtPrezzo);
-        dialog.add(new JLabel("Giacenza:"));
-        dialog.add(txtGiacenza);
-        dialog.add(new JLabel("Scorta Minima:"));
-        dialog.add(txtScortaMin);
-        dialog.add(new JLabel("Immagine:"));
-        dialog.add(panelImmagine);
-        
+
+        panel.add(new JLabel("Marca:"));
+        panel.add(txtMarca);
+        panel.add(new JLabel("Modello:"));
+        panel.add(txtModello);
+        panel.add(new JLabel("Targa (opzionale):"));
+        panel.add(txtTarga);
+        panel.add(new JLabel("Anno:"));
+        panel.add(txtAnno);
+        panel.add(new JLabel("Prezzo €:"));
+        panel.add(txtPrezzo);
+        panel.add(new JLabel("Giacenza:"));
+        panel.add(txtGiacenza);
+        panel.add(new JLabel("Scorta Minima:"));
+        panel.add(txtScortaMin);
+        panel.add(new JLabel("Immagine:"));
+        panel.add(panelImmagine);
+
         JButton btnSalva = new JButton("Salva");
         JButton btnAnnulla = new JButton("Annulla");
-        
+
         btnSalva.addActionListener(e -> {
             try {
+                // Parsing prezzo: rimuovi punti migliaia, sostituisci virgola con punto
+                String prezzoStr = txtPrezzo.getText().replace(".", "").replace(",", ".");
+
                 Auto auto = new Auto(
                     txtMarca.getText(),
                     txtModello.getText(),
                     txtTarga.getText(),
                     Integer.parseInt(txtAnno.getText()),
-                    Double.parseDouble(txtPrezzo.getText().replace(",", ".")),
+                    Double.parseDouble(prezzoStr),
                     Integer.parseInt(txtGiacenza.getText()),
                     Integer.parseInt(txtScortaMin.getText()),
                     txtImmagine.getText().isEmpty() ? null : txtImmagine.getText()
                 );
                 auto.setId(id);
-                
+
                 if (autoDAO.aggiorna(auto)) {
                     JOptionPane.showMessageDialog(dialog, "✅ Auto modificata con successo!");
                     dialog.dispose();
@@ -862,12 +893,13 @@ public class SchermataCatalogo extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "❌ Errore: " + ex.getMessage());
             }
         });
-        
+
         btnAnnulla.addActionListener(e -> dialog.dispose());
-        
-        dialog.add(btnSalva);
-        dialog.add(btnAnnulla);
-        
+
+        panel.add(btnSalva);
+        panel.add(btnAnnulla);
+
+        dialog.add(panel);
         dialog.setVisible(true);
     }
     

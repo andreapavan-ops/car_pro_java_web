@@ -7,8 +7,11 @@ import model.Vendita;
 import model.Auto;
 import model.Ordine;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,8 +27,7 @@ public class SchermataStatistiche extends JPanel {
     // Pannelli statistiche
     private JLabel lblTotaleVendite;
     private JLabel lblNumeroVendite;
-    private JLabel lblMediaVendita;
-    private JLabel lblAutoVendute;
+    private JLabel lblScorteBasse;
     private JLabel lblTotaleOrdini;
     private JLabel lblMargine;
     
@@ -39,7 +41,7 @@ public class SchermataStatistiche extends JPanel {
         
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
-        headerPanel.setBackground(new Color(230, 126, 34));
+        headerPanel.setBackground(new Color(0, 146, 70));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
 
         JLabel titolo = new JLabel("Vendite e Statistiche");
@@ -51,8 +53,8 @@ public class SchermataStatistiche extends JPanel {
         
         // Pannello principale con split
         JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        splitPane.setDividerLocation(200);
-        splitPane.setResizeWeight(0.3);
+        splitPane.setDividerLocation(80);
+        splitPane.setResizeWeight(0.1);
         
         // Pannello statistiche (sopra)
         JPanel panelStatistiche = creaPannelloStatistiche();
@@ -61,9 +63,30 @@ public class SchermataStatistiche extends JPanel {
         // Pannello vendite (sotto)
         JPanel panelVendite = creaPannelloVendite();
         splitPane.setBottomComponent(panelVendite);
-        
+
         add(splitPane, BorderLayout.CENTER);
-        
+
+        // Footer con pulsanti stile Catalogo
+        JPanel panelFooter = new JPanel(new GridLayout(1, 4, 0, 0));
+        panelFooter.setBackground(new Color(206, 43, 55)); // Rosso bandiera italiana
+        panelFooter.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
+
+        Color coloreSidebar = new Color(45, 52, 54);
+        JPanel btnNuova = creaBottoneConIcona("+", "Nuova Vendita", coloreSidebar, e -> mostraDialogNuovaVendita());
+        JPanel btnElimina = creaBottoneConIcona("🗑️", "Elimina", coloreSidebar, e -> eliminaVendita());
+        JPanel btnAggiorna = creaBottoneConIcona("🔄", "Aggiorna", coloreSidebar, e -> {
+            caricaVendite();
+            aggiornaStatistiche();
+        });
+        JPanel btnEsporta = creaBottoneConIcona("📄", "Esporta Report", coloreSidebar, e -> esportaReport());
+
+        panelFooter.add(btnNuova);
+        panelFooter.add(btnElimina);
+        panelFooter.add(btnAggiorna);
+        panelFooter.add(btnEsporta);
+
+        add(panelFooter, BorderLayout.SOUTH);
+
         // Carica dati iniziali
         caricaVendite();
         aggiornaStatistiche();
@@ -71,77 +94,86 @@ public class SchermataStatistiche extends JPanel {
     
     private JPanel creaPannelloStatistiche() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 10, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
         panel.setBackground(Color.WHITE);
-        
-        // Titolo sezione
-        JLabel lblTitolo = new JLabel("📈 Dashboard");
-        lblTitolo.setFont(new Font("Arial", Font.BOLD, 18));
-        lblTitolo.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
-        panel.add(lblTitolo, BorderLayout.NORTH);
-        
-        // Griglia con le card statistiche
-        JPanel gridPanel = new JPanel(new GridLayout(2, 3, 15, 15));
-        gridPanel.setBackground(Color.WHITE);
-        
-        // Card 1: Totale Vendite
-        JPanel card1 = creaCardStatistica("💰 Totale Vendite", "0.00 €", new Color(46, 204, 113));
-        lblTotaleVendite = (JLabel) ((JPanel) card1.getComponent(1)).getComponent(0);
-        gridPanel.add(card1);
-        
-        // Card 2: Numero Vendite
-        JPanel card2 = creaCardStatistica("🛒 N° Vendite", "0", new Color(52, 152, 219));
-        lblNumeroVendite = (JLabel) ((JPanel) card2.getComponent(1)).getComponent(0);
-        gridPanel.add(card2);
-        
-        // Card 3: Media Vendita
-        JPanel card3 = creaCardStatistica("📊 Media Vendita", "0.00 €", new Color(155, 89, 182));
-        lblMediaVendita = (JLabel) ((JPanel) card3.getComponent(1)).getComponent(0);
-        gridPanel.add(card3);
-        
-        // Card 4: Auto Vendute
-        JPanel card4 = creaCardStatistica("🚗 Auto Vendute", "0", new Color(241, 196, 15));
-        lblAutoVendute = (JLabel) ((JPanel) card4.getComponent(1)).getComponent(0);
-        gridPanel.add(card4);
-        
-        // Card 5: Totale Ordini
-        JPanel card5 = creaCardStatistica("📦 Totale Ordini", "0.00 €", new Color(231, 76, 60));
-        lblTotaleOrdini = (JLabel) ((JPanel) card5.getComponent(1)).getComponent(0);
-        gridPanel.add(card5);
-        
-        // Card 6: Margine Stimato
-        JPanel card6 = creaCardStatistica("💹 Margine", "0.00 €", new Color(26, 188, 156));
-        lblMargine = (JLabel) ((JPanel) card6.getComponent(1)).getComponent(0);
-        gridPanel.add(card6);
-        
-        panel.add(gridPanel, BorderLayout.CENTER);
-        
+
+        // Barra orizzontale con sfondo grigio medio - 5 statistiche
+        JPanel barraStats = new JPanel(new GridLayout(1, 5, 0, 0));
+        barraStats.setBackground(new Color(100, 110, 115));
+        barraStats.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(80, 90, 95), 2),
+            BorderFactory.createEmptyBorder(8, 10, 8, 10)
+        ));
+
+        // Stat 1: Totale Vendite
+        JPanel stat1 = creaStatItem("💰", "Vendite");
+        lblTotaleVendite = (JLabel) stat1.getComponent(1);
+        barraStats.add(stat1);
+
+        // Stat 2: Numero Vendite (con icona auto)
+        JPanel stat2 = creaStatItem("🚗", "N° Vendite");
+        lblNumeroVendite = (JLabel) stat2.getComponent(1);
+        barraStats.add(stat2);
+
+        // Stat 3: Scorte Basse (cliccabile per dettagli)
+        JPanel stat3 = creaStatItem("⚠️", "Scorte Basse");
+        lblScorteBasse = (JLabel) stat3.getComponent(1);
+        stat3.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        stat3.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                mostraDettagliScorteBasse();
+            }
+        });
+        barraStats.add(stat3);
+
+        // Stat 4: Totale Ordini
+        JPanel stat4 = creaStatItem("📦", "Ordini");
+        lblTotaleOrdini = (JLabel) stat4.getComponent(1);
+        barraStats.add(stat4);
+
+        // Stat 5: Margine
+        JPanel stat5 = creaStatItem("💹", "Margine");
+        lblMargine = (JLabel) stat5.getComponent(1);
+        barraStats.add(stat5);
+
+        panel.add(barraStats, BorderLayout.CENTER);
+
         return panel;
     }
-    
-    private JPanel creaCardStatistica(String titolo, String valore, Color colore) {
-        JPanel card = new JPanel();
-        card.setLayout(new BorderLayout(5, 5));
-        card.setBackground(colore);
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(colore.darker(), 2),
-            BorderFactory.createEmptyBorder(15, 15, 15, 15)
-        ));
-        
-        JLabel lblTitolo = new JLabel(titolo);
-        lblTitolo.setFont(new Font("Arial", Font.BOLD, 14));
-        lblTitolo.setForeground(Color.WHITE);
-        card.add(lblTitolo, BorderLayout.NORTH);
-        
-        JPanel centerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        centerPanel.setBackground(colore);
-        JLabel lblValore = new JLabel(valore);
-        lblValore.setFont(new Font("Arial", Font.BOLD, 24));
+
+    private JPanel creaStatItem(String icona, String etichetta) {
+        JPanel item = new JPanel();
+        item.setLayout(new BorderLayout(0, 2));
+        item.setBackground(new Color(100, 110, 115));
+
+        // Riga superiore: icona + etichetta
+        JPanel rigaSup = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+        rigaSup.setBackground(new Color(100, 110, 115));
+
+        JLabel lblIcona = new JLabel(icona);
+        lblIcona.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 18)); // Stessa dimensione sidebar
+        // Colora l'icona di warning in giallo
+        if (icona.equals("⚠️") || icona.equals("⚠")) {
+            lblIcona.setText("\u26A0"); // Usa solo il simbolo warning senza variante
+            lblIcona.setForeground(new Color(255, 200, 0)); // Giallo
+        }
+        rigaSup.add(lblIcona);
+
+        JLabel lblEtichetta = new JLabel(etichetta);
+        lblEtichetta.setFont(new Font("Arial", Font.BOLD, 14)); // Testo più grande
+        lblEtichetta.setForeground(Color.BLACK); // Colore nero
+        rigaSup.add(lblEtichetta);
+
+        item.add(rigaSup, BorderLayout.NORTH);
+
+        // Riga inferiore: valore (bianco, centrato)
+        JLabel lblValore = new JLabel("0", SwingConstants.CENTER);
+        lblValore.setFont(new Font("Arial", Font.BOLD, 18)); // Valore più grande
         lblValore.setForeground(Color.WHITE);
-        centerPanel.add(lblValore);
-        card.add(centerPanel, BorderLayout.CENTER);
-        
-        return card;
+        item.add(lblValore, BorderLayout.CENTER);
+
+        return item;
     }
     
     private JPanel creaPannelloVendite() {
@@ -166,47 +198,113 @@ public class SchermataStatistiche extends JPanel {
         tableVendite.setRowHeight(28);
         tableVendite.setFont(new Font("Arial", Font.PLAIN, 13));
         tableVendite.getTableHeader().setFont(new Font("Arial", Font.BOLD, 13));
-        
+
+        // Renderer per righe zebrate
+        Color rigaPari = Color.WHITE;
+        Color rigaDispari = new Color(245, 245, 245);
+        DefaultTableCellRenderer zebraRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (!isSelected) {
+                    c.setBackground(row % 2 == 0 ? rigaPari : rigaDispari);
+                }
+                setHorizontalAlignment(SwingConstants.CENTER);
+                return c;
+            }
+        };
+        for (int i = 0; i < tableVendite.getColumnCount(); i++) {
+            tableVendite.getColumnModel().getColumn(i).setCellRenderer(zebraRenderer);
+        }
+
         JScrollPane scrollPane = new JScrollPane(tableVendite);
         panel.add(scrollPane, BorderLayout.CENTER);
-        
-        // Pulsanti gestione vendite
-        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        panelPulsanti.setBackground(Color.WHITE);
-        
-        JButton btnNuova = creaBottone("➕ Nuova Vendita", new Color(46, 204, 113));
-        JButton btnElimina = creaBottone("❌ Elimina", new Color(231, 76, 60));
-        JButton btnAggiorna = creaBottone("🔄 Aggiorna", new Color(149, 165, 166));
-        JButton btnEsporta = creaBottone("📄 Esporta Report", new Color(52, 152, 219));
-        
-        btnNuova.addActionListener(e -> mostraDialogNuovaVendita());
-        btnElimina.addActionListener(e -> eliminaVendita());
-        btnAggiorna.addActionListener(e -> {
-            caricaVendite();
-            aggiornaStatistiche();
-        });
-        btnEsporta.addActionListener(e -> esportaReport());
-        
-        panelPulsanti.add(btnNuova);
-        panelPulsanti.add(btnElimina);
-        panelPulsanti.add(btnAggiorna);
-        panelPulsanti.add(btnEsporta);
-        
-        panel.add(panelPulsanti, BorderLayout.SOUTH);
-        
+
         return panel;
     }
     
-    private JButton creaBottone(String testo, Color colore) {
-        JButton btn = new JButton(testo);
-        btn.setBackground(colore);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(new Font("Arial", Font.BOLD, 14));
-        btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(160, 35));
-        return btn;
+    private JPanel creaBottoneConIcona(String icona, String testo, Color coloreIcona, java.awt.event.ActionListener action) {
+        JPanel panel = new JPanel() {
+            private boolean showShadow = false;
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (showShadow) {
+                    Graphics2D g2d = (Graphics2D) g.create();
+                    g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    int shadowSize = 4;
+                    for (int i = 0; i < shadowSize; i++) {
+                        int alpha = 50 - (i * 12);
+                        if (alpha < 0) alpha = 0;
+                        g2d.setColor(new Color(0, 0, 0, alpha));
+                        g2d.fillRoundRect(i + 2, i + 2, getWidth() - i - 2, getHeight() - i - 2, 5, 5);
+                    }
+                    g2d.dispose();
+                }
+            }
+
+            @SuppressWarnings("unused")
+            public void setShadow(boolean show) {
+                this.showShadow = show;
+                repaint();
+            }
+        };
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(new Color(206, 43, 55));
+        panel.setOpaque(false);
+
+        JLabel lblIcona = new JLabel(icona);
+        lblIcona.setOpaque(true);
+        lblIcona.setBackground(coloreIcona);
+        lblIcona.setForeground(Color.WHITE);
+        // Per + e - usa font più grande e bold
+        if (icona.equals("+") || icona.equals("-")) {
+            lblIcona.setFont(new Font("Arial", Font.BOLD, 28));
+        } else {
+            lblIcona.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 24));
+        }
+        lblIcona.setHorizontalAlignment(SwingConstants.CENTER);
+        lblIcona.setPreferredSize(new Dimension(35, 35));
+        lblIcona.setMinimumSize(new Dimension(35, 35));
+        lblIcona.setMaximumSize(new Dimension(35, 35));
+        lblIcona.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+        panel.add(lblIcona);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        JLabel lblTesto = new JLabel("<html><span>" + testo + "</span></html>");
+        lblTesto.setForeground(Color.WHITE);
+        lblTesto.setFont(new Font("Segoe UI Emoji", Font.BOLD, 14));
+        lblTesto.setAlignmentX(Component.CENTER_ALIGNMENT);
+        lblTesto.setHorizontalAlignment(SwingConstants.CENTER);
+        panel.add(lblTesto);
+        panel.add(Box.createRigidArea(new Dimension(0, 5)));
+
+        panel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        panel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                action.actionPerformed(null);
+            }
+            public void mouseEntered(MouseEvent e) {
+                lblTesto.setText("<html><u>" + testo + "</u></html>");
+                try {
+                    java.lang.reflect.Method m = panel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(panel, true);
+                } catch (Exception ex) {}
+            }
+            public void mouseExited(MouseEvent e) {
+                lblTesto.setText("<html><span>" + testo + "</span></html>");
+                try {
+                    java.lang.reflect.Method m = panel.getClass().getMethod("setShadow", boolean.class);
+                    m.invoke(panel, false);
+                } catch (Exception ex) {}
+            }
+        });
+
+        return panel;
     }
     
     private void caricaVendite() {
@@ -236,35 +334,47 @@ public class SchermataStatistiche extends JPanel {
     private void aggiornaStatistiche() {
         List<Vendita> listaVendite = venditaDAO.getAll();
         List<Ordine> listaOrdini = ordineDAO.getAll();
-        
+        List<Auto> listaAuto = autoDAO.getAll();
+
         // Calcola statistiche vendite
         double totaleVendite = 0.0;
         int numeroVendite = listaVendite.size();
-        int autoVendute = numeroVendite; // Ogni vendita = 1 auto
-        
+
         for (Vendita vendita : listaVendite) {
             totaleVendite += vendita.getPrezzoVendita();
         }
-        
-        double mediaVendita = numeroVendite > 0 ? totaleVendite / numeroVendite : 0.0;
-        
+
+        // Calcola scorte basse (giacenza < scorta minima)
+        int scorteBasse = 0;
+        for (Auto auto : listaAuto) {
+            if (auto.getGiacenza() < auto.getScortaMinima()) {
+                scorteBasse++;
+            }
+        }
+
         // Calcola totale ordini
         double totaleOrdini = 0.0;
         for (Ordine ordine : listaOrdini) {
             totaleOrdini += ordine.getTotale();
         }
-        
+
         // Calcola margine stimato (vendite - ordini)
         double margine = totaleVendite - totaleOrdini;
-        
+
         // Aggiorna le label
         lblTotaleVendite.setText(String.format(Locale.ITALIAN, "%,.2f €", totaleVendite));
         lblNumeroVendite.setText(String.valueOf(numeroVendite));
-        lblMediaVendita.setText(String.format(Locale.ITALIAN, "%,.2f €", mediaVendita));
-        lblAutoVendute.setText(String.valueOf(autoVendute));
+        lblScorteBasse.setText(String.valueOf(scorteBasse));
         lblTotaleOrdini.setText(String.format(Locale.ITALIAN, "%,.2f €", totaleOrdini));
         lblMargine.setText(String.format(Locale.ITALIAN, "%,.2f €", margine));
-        
+
+        // Cambia colore scorte basse in base al valore
+        if (scorteBasse > 0) {
+            lblScorteBasse.setForeground(new Color(255, 100, 100)); // Rosso se ci sono scorte basse
+        } else {
+            lblScorteBasse.setForeground(new Color(100, 255, 100)); // Verde se tutto ok
+        }
+
         // Cambia colore margine in base al valore
         if (margine > 0) {
             lblMargine.setForeground(Color.WHITE);
@@ -272,13 +382,43 @@ public class SchermataStatistiche extends JPanel {
             lblMargine.setForeground(new Color(255, 200, 200));
         }
     }
-    
+
+    private void mostraDettagliScorteBasse() {
+        List<Auto> listaAuto = autoDAO.getAll();
+        StringBuilder dettagli = new StringBuilder();
+        int count = 0;
+
+        for (Auto auto : listaAuto) {
+            if (auto.getGiacenza() < auto.getScortaMinima()) {
+                int mancanti = auto.getScortaMinima() - auto.getGiacenza();
+                dettagli.append(String.format("• %s %s → %d (min: %d) - mancano %d\n",
+                    auto.getMarca(), auto.getModello(),
+                    auto.getGiacenza(), auto.getScortaMinima(), mancanti));
+                count++;
+            }
+        }
+
+        if (count == 0) {
+            JOptionPane.showMessageDialog(this,
+                "Tutte le scorte sono sufficienti!",
+                "Scorte OK",
+                JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                "Modelli con scorta insufficiente: " + count + "\n\n" + dettagli.toString(),
+                "⚠️ Scorte Basse",
+                JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
     private void mostraDialogNuovaVendita() {
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Nuova Vendita", true);
-        dialog.setLayout(new GridLayout(9, 2, 10, 10));
-        dialog.setSize(500, 450);
+        dialog.setSize(500, 480);
         dialog.setLocationRelativeTo(this);
-        
+
+        JPanel panel = new JPanel(new GridLayout(10, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
         JComboBox<String> cmbAuto = new JComboBox<>();
         List<Auto> listaAuto = autoDAO.getAll();
         for (Auto a : listaAuto) {
@@ -286,7 +426,7 @@ public class SchermataStatistiche extends JPanel {
                 cmbAuto.addItem(a.getId() + " - " + a.getMarca() + " " + a.getModello() + " (Disp: " + a.getGiacenza() + ")");
             }
         }
-        
+
         JTextField txtNome = new JTextField();
         JTextField txtCognome = new JTextField();
         JTextField txtCodiceFiscale = new JTextField();
@@ -295,7 +435,7 @@ public class SchermataStatistiche extends JPanel {
         JTextField txtPrezzo = new JTextField();
         JComboBox<String> cmbMetodoPagamento = new JComboBox<>(new String[]{"Contanti", "Carta", "Bonifico", "Finanziamento"});
         JTextField txtData = new JTextField(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
-        
+
         // Listener per auto-compilare il prezzo quando si seleziona un'auto
         cmbAuto.addActionListener(e -> {
             String autoStr = (String) cmbAuto.getSelectedItem();
@@ -307,29 +447,29 @@ public class SchermataStatistiche extends JPanel {
                 }
             }
         });
-        
-        dialog.add(new JLabel("Auto:"));
-        dialog.add(cmbAuto);
-        dialog.add(new JLabel("Nome Cliente:"));
-        dialog.add(txtNome);
-        dialog.add(new JLabel("Cognome Cliente:"));
-        dialog.add(txtCognome);
-        dialog.add(new JLabel("Codice Fiscale:"));
-        dialog.add(txtCodiceFiscale);
-        dialog.add(new JLabel("Telefono:"));
-        dialog.add(txtTelefono);
-        dialog.add(new JLabel("Email:"));
-        dialog.add(txtEmail);
-        dialog.add(new JLabel("Prezzo Vendita €:"));
-        dialog.add(txtPrezzo);
-        dialog.add(new JLabel("Metodo Pagamento:"));
-        dialog.add(cmbMetodoPagamento);
-        dialog.add(new JLabel("Data (gg/mm/aaaa):"));
-        dialog.add(txtData);
-        
+
+        panel.add(new JLabel("Auto:"));
+        panel.add(cmbAuto);
+        panel.add(new JLabel("Nome Cliente:"));
+        panel.add(txtNome);
+        panel.add(new JLabel("Cognome Cliente:"));
+        panel.add(txtCognome);
+        panel.add(new JLabel("Codice Fiscale:"));
+        panel.add(txtCodiceFiscale);
+        panel.add(new JLabel("Telefono:"));
+        panel.add(txtTelefono);
+        panel.add(new JLabel("Email:"));
+        panel.add(txtEmail);
+        panel.add(new JLabel("Prezzo Vendita €:"));
+        panel.add(txtPrezzo);
+        panel.add(new JLabel("Metodo Pagamento:"));
+        panel.add(cmbMetodoPagamento);
+        panel.add(new JLabel("Data (gg/mm/aaaa):"));
+        panel.add(txtData);
+
         JButton btnSalva = new JButton("💾 Salva");
         JButton btnAnnulla = new JButton("Annulla");
-        
+
         btnSalva.addActionListener(e -> {
             try {
                 String autoStr = (String) cmbAuto.getSelectedItem();
@@ -337,22 +477,22 @@ public class SchermataStatistiche extends JPanel {
                     JOptionPane.showMessageDialog(dialog, "⚠️ Seleziona un'auto!");
                     return;
                 }
-                
+
                 int autoId = Integer.parseInt(autoStr.split(" - ")[0]);
                 String nomeCliente = txtNome.getText();
                 String cognomeCliente = txtCognome.getText();
                 double prezzoVendita = Double.parseDouble(txtPrezzo.getText().replace(".", "").replace(",", "."));
-                
+
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 LocalDate dataVendita = LocalDate.parse(txtData.getText(), formatter);
-                
+
                 // Verifica giacenza
                 Auto auto = autoDAO.getById(autoId);
                 if (auto != null && auto.getGiacenza() <= 0) {
                     JOptionPane.showMessageDialog(dialog, "❌ Auto non disponibile!");
                     return;
                 }
-                
+
                 // Crea vendita
                 Vendita vendita = new Vendita();
                 vendita.setAutoId(autoId);
@@ -364,14 +504,14 @@ public class SchermataStatistiche extends JPanel {
                 vendita.setPrezzoVendita(prezzoVendita);
                 vendita.setMetodoPagamento((String) cmbMetodoPagamento.getSelectedItem());
                 vendita.setDataVendita(dataVendita);
-                
+
                 if (venditaDAO.inserisci(vendita)) {
                     // Aggiorna giacenza auto (decrementa di 1)
                     if (auto != null) {
                         auto.setGiacenza(auto.getGiacenza() - 1);
                         autoDAO.aggiorna(auto);
                     }
-                    
+
                     JOptionPane.showMessageDialog(dialog, "✅ Vendita registrata con successo!");
                     dialog.dispose();
                     caricaVendite();
@@ -383,12 +523,13 @@ public class SchermataStatistiche extends JPanel {
                 JOptionPane.showMessageDialog(dialog, "❌ Errore: " + ex.getMessage());
             }
         });
-        
+
         btnAnnulla.addActionListener(e -> dialog.dispose());
-        
-        dialog.add(btnSalva);
-        dialog.add(btnAnnulla);
-        
+
+        panel.add(btnSalva);
+        panel.add(btnAnnulla);
+
+        dialog.add(panel);
         dialog.setVisible(true);
     }
     
@@ -416,6 +557,15 @@ public class SchermataStatistiche extends JPanel {
         }
     }
     
+    /**
+     * Metodo pubblico per aggiornare i dati della schermata.
+     * Chiamato automaticamente quando si passa a questa schermata.
+     */
+    public void refresh() {
+        caricaVendite();
+        aggiornaStatistiche();
+    }
+
     private void esportaReport() {
         StringBuilder report = new StringBuilder();
         report.append("=== REPORT VENDITE E STATISTICHE ===\n\n");
@@ -424,8 +574,7 @@ public class SchermataStatistiche extends JPanel {
         report.append("STATISTICHE GENERALI:\n");
         report.append("- Totale Vendite: ").append(lblTotaleVendite.getText()).append("\n");
         report.append("- Numero Vendite: ").append(lblNumeroVendite.getText()).append("\n");
-        report.append("- Media Vendita: ").append(lblMediaVendita.getText()).append("\n");
-        report.append("- Auto Vendute: ").append(lblAutoVendute.getText()).append("\n");
+        report.append("- Scorte Basse: ").append(lblScorteBasse.getText()).append(" modelli\n");
         report.append("- Totale Ordini: ").append(lblTotaleOrdini.getText()).append("\n");
         report.append("- Margine: ").append(lblMargine.getText()).append("\n\n");
         

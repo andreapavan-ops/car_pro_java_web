@@ -5,6 +5,8 @@ import model.Auto;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,25 +17,25 @@ import java.util.List;
 public class SchermataImmagini extends JPanel {
     private AutoDAO autoDAO;
     private Auto autoSelezionata;
-    private JLabel lblAutoSelezionata;
     private JLabel lblImmagineCorrente;
     private JLabel lblContatore;
+    private JLabel lblAutoSelezionata;
     private List<String> immaginiAuto;
     private int indiceCorrente = 0;
     private JButton btnPrecedente;
     private JButton btnSuccessiva;
     private JButton btnElimina;
     private JButton btnModifica;
-    private JList<String> listaImmagini;
-    private DefaultListModel<String> modelLista;
-    
+    private JPanel panelGriglia;
+    private JScrollPane scrollGriglia;
+
     public SchermataImmagini() {
         autoDAO = new AutoDAO();
         immaginiAuto = new ArrayList<>();
-        
+
         setLayout(new BorderLayout(0, 0));
         setBackground(Color.WHITE);
-        
+
         // Header
         JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setBackground(new Color(0, 146, 70));
@@ -43,141 +45,108 @@ public class SchermataImmagini extends JPanel {
         titolo.setForeground(Color.WHITE);
         headerPanel.add(titolo, BorderLayout.WEST);
         add(headerPanel, BorderLayout.NORTH);
-        
-        // Pannello centrale
-        JPanel panelCentrale = new JPanel(new BorderLayout(20, 20));
-        panelCentrale.setBackground(Color.WHITE);
-        panelCentrale.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
-        // === PANNELLO SINISTRO: Selezione Auto ===
-        JPanel panelSinistro = new JPanel();
-        panelSinistro.setLayout(new BoxLayout(panelSinistro, BoxLayout.Y_AXIS));
+
+        // Pannello centrale con split orizzontale
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setDividerLocation(320);
+        splitPane.setResizeWeight(0.3);
+
+        // === PANNELLO SINISTRO: Griglia Miniature ===
+        JPanel panelSinistro = new JPanel(new BorderLayout());
         panelSinistro.setBackground(Color.WHITE);
         panelSinistro.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
-            "1. Seleziona Auto",
+            "Seleziona Modello",
             0, 0,
             new Font("Arial", Font.BOLD, 16)
         ));
-        panelSinistro.setPreferredSize(new Dimension(300, 0));
-        
-        lblAutoSelezionata = new JLabel("Nessuna auto selezionata");
-        lblAutoSelezionata.setFont(new Font("Arial", Font.BOLD, 14));
-        lblAutoSelezionata.setForeground(new Color(206, 43, 55));
-        lblAutoSelezionata.setAlignmentX(Component.CENTER_ALIGNMENT);
-        lblAutoSelezionata.setBorder(BorderFactory.createEmptyBorder(10, 10, 20, 10));
-        
-        JButton btnSelezionaAuto = new JButton("🚗 Seleziona Auto");
-        btnSelezionaAuto.setFont(new Font("Arial", Font.BOLD, 14));
-        btnSelezionaAuto.setBackground(new Color(0, 146, 70));
-        btnSelezionaAuto.setForeground(Color.WHITE);
-        btnSelezionaAuto.setFocusPainted(false);
-        btnSelezionaAuto.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnSelezionaAuto.setAlignmentX(Component.CENTER_ALIGNMENT);
-        btnSelezionaAuto.setMaximumSize(new Dimension(250, 40));
-        btnSelezionaAuto.addActionListener(e -> selezionaAuto());
-        
-        panelSinistro.add(Box.createRigidArea(new Dimension(0, 20)));
-        panelSinistro.add(lblAutoSelezionata);
-        panelSinistro.add(btnSelezionaAuto);
-        panelSinistro.add(Box.createRigidArea(new Dimension(0, 30)));
-        
-        // Lista immagini
-        JLabel lblListaTitolo = new JLabel("Immagini caricate:");
-        lblListaTitolo.setFont(new Font("Arial", Font.BOLD, 12));
-        lblListaTitolo.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        modelLista = new DefaultListModel<>();
-        listaImmagini = new JList<>(modelLista);
-        listaImmagini.setFont(new Font("Arial", Font.PLAIN, 12));
-        listaImmagini.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        listaImmagini.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int idx = listaImmagini.getSelectedIndex();
-                if (idx >= 0 && idx < immaginiAuto.size()) {
-                    indiceCorrente = idx;
-                    mostraImmagineCorrente();
-                }
-            }
-        });
-        
-        JScrollPane scrollLista = new JScrollPane(listaImmagini);
-        scrollLista.setPreferredSize(new Dimension(250, 200));
-        scrollLista.setMaximumSize(new Dimension(250, 200));
-        scrollLista.setAlignmentX(Component.CENTER_ALIGNMENT);
-        
-        panelSinistro.add(lblListaTitolo);
-        panelSinistro.add(Box.createRigidArea(new Dimension(0, 10)));
-        panelSinistro.add(scrollLista);
-        panelSinistro.add(Box.createVerticalGlue());
-        
-        panelCentrale.add(panelSinistro, BorderLayout.WEST);
-        
-        // === PANNELLO CENTRALE: Visualizzazione Immagine ===
-        JPanel panelVisualizzazione = new JPanel(new BorderLayout(10, 10));
-        panelVisualizzazione.setBackground(Color.WHITE);
-        panelVisualizzazione.setBorder(BorderFactory.createTitledBorder(
+
+        // Griglia con scroll
+        panelGriglia = new JPanel(new GridLayout(0, 2, 10, 10));
+        panelGriglia.setBackground(Color.WHITE);
+        panelGriglia.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        scrollGriglia = new JScrollPane(panelGriglia);
+        scrollGriglia.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollGriglia.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollGriglia.getVerticalScrollBar().setUnitIncrement(16);
+
+        panelSinistro.add(scrollGriglia, BorderLayout.CENTER);
+        splitPane.setLeftComponent(panelSinistro);
+
+        // === PANNELLO DESTRO: Carosello ===
+        JPanel panelDestro = new JPanel(new BorderLayout(10, 10));
+        panelDestro.setBackground(Color.WHITE);
+        panelDestro.setBorder(BorderFactory.createTitledBorder(
             BorderFactory.createLineBorder(new Color(200, 200, 200), 2),
-            "2. Visualizza e Gestisci Immagini",
+            "Carosello Immagini",
             0, 0,
             new Font("Arial", Font.BOLD, 16)
         ));
-        
-        // Immagine
-        lblImmagineCorrente = new JLabel("Seleziona un'auto per visualizzare le immagini", JLabel.CENTER);
+
+        // Label auto selezionata
+        lblAutoSelezionata = new JLabel("Clicca su un modello per visualizzare le immagini", JLabel.CENTER);
+        lblAutoSelezionata.setFont(new Font("Arial", Font.BOLD, 16));
+        lblAutoSelezionata.setForeground(new Color(0, 146, 70));
+        lblAutoSelezionata.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        panelDestro.add(lblAutoSelezionata, BorderLayout.NORTH);
+
+        // Immagine centrale
+        lblImmagineCorrente = new JLabel("", JLabel.CENTER);
         lblImmagineCorrente.setFont(new Font("Arial", Font.BOLD, 16));
         lblImmagineCorrente.setForeground(Color.GRAY);
-        lblImmagineCorrente.setPreferredSize(new Dimension(600, 400));
+        lblImmagineCorrente.setPreferredSize(new Dimension(500, 350));
         lblImmagineCorrente.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 2));
-        
-        // Pannello controlli
+
+        // Mostra logo di default
+        mostraLogoDefault();
+
+        panelDestro.add(lblImmagineCorrente, BorderLayout.CENTER);
+
+        // Pannello controlli navigazione
         JPanel panelControlli = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         panelControlli.setBackground(Color.WHITE);
-        
+
         btnPrecedente = new JButton("◀ Precedente");
         btnSuccessiva = new JButton("Successiva ▶");
         lblContatore = new JLabel("0 / 0");
         lblContatore.setFont(new Font("Arial", Font.BOLD, 14));
-        
+
         btnPrecedente.setFont(new Font("Arial", Font.PLAIN, 13));
         btnSuccessiva.setFont(new Font("Arial", Font.PLAIN, 13));
         btnPrecedente.setFocusPainted(false);
         btnSuccessiva.setFocusPainted(false);
         btnPrecedente.setEnabled(false);
         btnSuccessiva.setEnabled(false);
-        
+
         btnPrecedente.addActionListener(e -> {
             if (!immaginiAuto.isEmpty()) {
                 indiceCorrente = (indiceCorrente - 1 + immaginiAuto.size()) % immaginiAuto.size();
                 mostraImmagineCorrente();
-                listaImmagini.setSelectedIndex(indiceCorrente);
             }
         });
-        
+
         btnSuccessiva.addActionListener(e -> {
             if (!immaginiAuto.isEmpty()) {
                 indiceCorrente = (indiceCorrente + 1) % immaginiAuto.size();
                 mostraImmagineCorrente();
-                listaImmagini.setSelectedIndex(indiceCorrente);
             }
         });
-        
+
         panelControlli.add(btnPrecedente);
         panelControlli.add(lblContatore);
         panelControlli.add(btnSuccessiva);
-        
-        panelVisualizzazione.add(lblImmagineCorrente, BorderLayout.CENTER);
-        panelVisualizzazione.add(panelControlli, BorderLayout.SOUTH);
-        
-        panelCentrale.add(panelVisualizzazione, BorderLayout.CENTER);
-        
-        add(panelCentrale, BorderLayout.CENTER);
-        
+
+        panelDestro.add(panelControlli, BorderLayout.SOUTH);
+
+        splitPane.setRightComponent(panelDestro);
+        add(splitPane, BorderLayout.CENTER);
+
         // === PANNELLO PULSANTI IN BASSO ===
         JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         panelPulsanti.setBackground(new Color(206, 43, 55));
         panelPulsanti.setBorder(BorderFactory.createEmptyBorder(15, 0, 15, 0));
-        
+
         JButton btnCaricaImmagine = new JButton("📁 Carica Nuova Immagine");
         btnCaricaImmagine.setFont(new Font("Arial", Font.BOLD, 14));
         btnCaricaImmagine.setBackground(new Color(206, 43, 55));
@@ -186,8 +155,8 @@ public class SchermataImmagini extends JPanel {
         btnCaricaImmagine.setCursor(new Cursor(Cursor.HAND_CURSOR));
         btnCaricaImmagine.setPreferredSize(new Dimension(220, 40));
         btnCaricaImmagine.addActionListener(e -> caricaImmagine());
-        
-        btnElimina = new JButton("🗑️ Elimina Immagine");
+
+        btnElimina = new JButton("\uD83D\uDDD1 Elimina Immagine");
         btnElimina.setFont(new Font("Arial", Font.BOLD, 14));
         btnElimina.setBackground(new Color(206, 43, 55));
         btnElimina.setForeground(Color.BLACK);
@@ -197,7 +166,7 @@ public class SchermataImmagini extends JPanel {
         btnElimina.setEnabled(false);
         btnElimina.addActionListener(e -> eliminaImmagine());
 
-        btnModifica = new JButton("✏️ Modifica Immagine");
+        btnModifica = new JButton("\u270F Modifica Immagine");
         btnModifica.setFont(new Font("Arial", Font.BOLD, 14));
         btnModifica.setBackground(new Color(206, 43, 55));
         btnModifica.setForeground(Color.BLACK);
@@ -207,89 +176,155 @@ public class SchermataImmagini extends JPanel {
         btnModifica.setEnabled(false);
         btnModifica.addActionListener(e -> modificaImmagine());
 
-        JButton btnAggiorna = new JButton("🔄 Ricarica Immagini");
+        JButton btnAggiorna = new JButton("🔄 Ricarica");
         btnAggiorna.setFont(new Font("Arial", Font.BOLD, 14));
         btnAggiorna.setBackground(new Color(206, 43, 55));
         btnAggiorna.setForeground(Color.BLACK);
         btnAggiorna.setFocusPainted(false);
         btnAggiorna.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btnAggiorna.setPreferredSize(new Dimension(220, 40));
+        btnAggiorna.setPreferredSize(new Dimension(150, 40));
         btnAggiorna.addActionListener(e -> {
+            caricaGriglia();
             if (autoSelezionata != null) {
                 caricaImmaginiAuto();
             }
         });
-        
+
         panelPulsanti.add(btnCaricaImmagine);
         panelPulsanti.add(btnModifica);
         panelPulsanti.add(btnElimina);
         panelPulsanti.add(btnAggiorna);
-        
+
         add(panelPulsanti, BorderLayout.SOUTH);
+
+        // Carica la griglia all'avvio
+        caricaGriglia();
     }
-    
-    private void selezionaAuto() {
+
+    private void caricaGriglia() {
+        panelGriglia.removeAll();
         List<Auto> listaAuto = autoDAO.getAll();
-        
-        if (listaAuto.isEmpty()) {
-            JOptionPane.showMessageDialog(this, 
-                "⚠️ Nessuna auto presente nel catalogo!", 
-                "Attenzione", 
-                JOptionPane.WARNING_MESSAGE);
-            return;
+
+        for (Auto auto : listaAuto) {
+            JPanel cardAuto = creaMiniatura(auto);
+            panelGriglia.add(cardAuto);
         }
-        
-        // Crea array di stringhe per la combo
-        String[] opzioni = new String[listaAuto.size()];
-        for (int i = 0; i < listaAuto.size(); i++) {
-            Auto a = listaAuto.get(i);
-            opzioni[i] = a.getId() + " - " + a.getMarca() + " " + a.getModello() + " (" + a.getTarga() + ")";
-        }
-        
-        String selezione = (String) JOptionPane.showInputDialog(
-            this,
-            "Seleziona l'auto per gestire le immagini:",
-            "Selezione Auto",
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            opzioni,
-            opzioni[0]
-        );
-        
-        if (selezione != null) {
-            // Estrai l'ID dalla stringa selezionata
-            int id = Integer.parseInt(selezione.split(" - ")[0]);
-            autoSelezionata = autoDAO.getById(id);
-            
-            if (autoSelezionata != null) {
-                lblAutoSelezionata.setText(
-                    "<html><center>" + 
-                    autoSelezionata.getMarca() + " " + autoSelezionata.getModello() + 
-                    "<br>" + autoSelezionata.getTarga() + 
-                    "</center></html>"
-                );
-                lblAutoSelezionata.setForeground(new Color(0, 146, 70));
-                caricaImmaginiAuto();
+
+        panelGriglia.revalidate();
+        panelGriglia.repaint();
+    }
+
+    private JPanel creaMiniatura(Auto auto) {
+        JPanel card = new JPanel();
+        card.setLayout(new BorderLayout(5, 5));
+        card.setBackground(Color.WHITE);
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(5, 5, 5, 5)
+        ));
+        card.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Miniatura immagine (ridimensionata automaticamente)
+        JLabel lblMiniatura = new JLabel("", JLabel.CENTER);
+        lblMiniatura.setPreferredSize(new Dimension(120, 80));
+        lblMiniatura.setBackground(new Color(240, 240, 240));
+        lblMiniatura.setOpaque(true);
+
+        // Carica immagine e ridimensiona automaticamente
+        if (auto.getImmagine() != null && !auto.getImmagine().isEmpty()) {
+            File fileImg = new File("resources/images/" + auto.getImmagine());
+            if (fileImg.exists()) {
+                ImageIcon icon = new ImageIcon(fileImg.getAbsolutePath());
+                Image img = icon.getImage().getScaledInstance(120, 80, Image.SCALE_SMOOTH);
+                lblMiniatura.setIcon(new ImageIcon(img));
+            } else {
+                lblMiniatura.setText("🚗");
+                lblMiniatura.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 30));
             }
+        } else {
+            lblMiniatura.setText("🚗");
+            lblMiniatura.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 30));
+        }
+
+        card.add(lblMiniatura, BorderLayout.CENTER);
+
+        // Nome modello sotto la miniatura
+        JLabel lblNome = new JLabel("<html><center>" + auto.getMarca() + "<br>" + auto.getModello() + "</center></html>", JLabel.CENTER);
+        lblNome.setFont(new Font("Arial", Font.BOLD, 11));
+        lblNome.setForeground(new Color(45, 52, 54));
+        card.add(lblNome, BorderLayout.SOUTH);
+
+        // Click handler
+        card.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                selezionaAuto(auto);
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                card.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(0, 146, 70), 2),
+                    BorderFactory.createEmptyBorder(4, 4, 4, 4)
+                ));
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                card.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                    BorderFactory.createEmptyBorder(5, 5, 5, 5)
+                ));
+            }
+        });
+
+        return card;
+    }
+
+    private void mostraLogoDefault() {
+        File fileLogo = new File("resources/images/logo.jpeg");
+        if (fileLogo.exists()) {
+            ImageIcon icon = new ImageIcon(fileLogo.getAbsolutePath());
+            // Ridimensiona mantenendo le proporzioni
+            int maxW = 400;
+            int maxH = 300;
+            int imgW = icon.getIconWidth();
+            int imgH = icon.getIconHeight();
+
+            double ratio = Math.min((double) maxW / imgW, (double) maxH / imgH);
+            int newW = (int) (imgW * ratio);
+            int newH = (int) (imgH * ratio);
+
+            Image img = icon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+            lblImmagineCorrente.setIcon(new ImageIcon(img));
+            lblImmagineCorrente.setText("");
+        } else {
+            lblImmagineCorrente.setIcon(null);
+            lblImmagineCorrente.setText("Seleziona un modello dalla griglia");
         }
     }
-    
+
+    private void selezionaAuto(Auto auto) {
+        autoSelezionata = auto;
+        lblAutoSelezionata.setText(auto.getMarca() + " " + auto.getModello());
+        lblAutoSelezionata.setForeground(new Color(0, 146, 70));
+        caricaImmaginiAuto();
+    }
+
     private void caricaImmaginiAuto() {
         if (autoSelezionata == null) return;
-        
+
         immaginiAuto.clear();
-        modelLista.clear();
         indiceCorrente = 0;
-        
+
         // Carica immagine principale
         if (autoSelezionata.getImmagine() != null && !autoSelezionata.getImmagine().isEmpty()) {
             File fileMain = new File("resources/images/" + autoSelezionata.getImmagine());
             if (fileMain.exists()) {
                 immaginiAuto.add(autoSelezionata.getImmagine());
-                modelLista.addElement("📷 " + autoSelezionata.getImmagine() + " (principale)");
             }
         }
-        
+
         // Carica immagini aggiuntive (pattern: nomefile_1.jpg, nomefile_2.jpg, ...)
         if (autoSelezionata.getImmagine() != null && autoSelezionata.getImmagine().contains(".")) {
             File dirImages = new File("resources/images");
@@ -304,31 +339,29 @@ public class SchermataImmagini extends JPanel {
                     File file = new File(dirImages, nomeFile);
                     if (file.exists()) {
                         immaginiAuto.add(nomeFile);
-                        modelLista.addElement("📷 " + nomeFile);
                     }
                 }
             }
         }
-        
+
         // Abilita/disabilita controlli
         boolean hasImages = !immaginiAuto.isEmpty();
-        btnPrecedente.setEnabled(hasImages);
-        btnSuccessiva.setEnabled(hasImages);
+        btnPrecedente.setEnabled(hasImages && immaginiAuto.size() > 1);
+        btnSuccessiva.setEnabled(hasImages && immaginiAuto.size() > 1);
         btnElimina.setEnabled(hasImages);
         btnModifica.setEnabled(hasImages);
-        
+
         if (hasImages) {
             mostraImmagineCorrente();
-            listaImmagini.setSelectedIndex(0);
         } else {
             lblImmagineCorrente.setIcon(null);
-            lblImmagineCorrente.setText("Nessuna immagine caricata per questa auto");
+            lblImmagineCorrente.setText("Nessuna immagine per questo modello");
             lblImmagineCorrente.setFont(new Font("Arial", Font.BOLD, 16));
             lblImmagineCorrente.setForeground(Color.GRAY);
             lblContatore.setText("0 / 0");
         }
     }
-    
+
     private void mostraImmagineCorrente() {
         if (immaginiAuto.isEmpty()) {
             lblImmagineCorrente.setText("Nessuna immagine disponibile");
@@ -336,13 +369,23 @@ public class SchermataImmagini extends JPanel {
             lblContatore.setText("0 / 0");
             return;
         }
-        
+
         String nomeImmagine = immaginiAuto.get(indiceCorrente);
         File fileImmagine = new File("resources/images/" + nomeImmagine);
-        
+
         if (fileImmagine.exists()) {
             ImageIcon icon = new ImageIcon(fileImmagine.getAbsolutePath());
-            Image img = icon.getImage().getScaledInstance(580, 380, Image.SCALE_SMOOTH);
+            // Ridimensiona mantenendo le proporzioni
+            int maxW = 500;
+            int maxH = 350;
+            int imgW = icon.getIconWidth();
+            int imgH = icon.getIconHeight();
+
+            double ratio = Math.min((double) maxW / imgW, (double) maxH / imgH);
+            int newW = (int) (imgW * ratio);
+            int newH = (int) (imgH * ratio);
+
+            Image img = icon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
             lblImmagineCorrente.setIcon(new ImageIcon(img));
             lblImmagineCorrente.setText("");
         } else {
@@ -351,33 +394,31 @@ public class SchermataImmagini extends JPanel {
             lblImmagineCorrente.setFont(new Font("Arial", Font.BOLD, 18));
             lblImmagineCorrente.setForeground(Color.RED);
         }
-        
+
         lblContatore.setText((indiceCorrente + 1) + " / " + immaginiAuto.size());
     }
-    
+
     private void caricaImmagine() {
         if (autoSelezionata == null) {
             JOptionPane.showMessageDialog(this,
-                "⚠️ Seleziona prima un'auto!",
+                "⚠️ Seleziona prima un modello dalla griglia!",
                 "Attenzione",
                 JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
+
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Seleziona un'immagine");
         fileChooser.setFileFilter(new FileNameExtensionFilter(
             "Immagini (JPG, PNG, GIF)", "jpg", "jpeg", "png", "gif"
         ));
-        fileChooser.setMultiSelectionEnabled(true); // Permette selezione multipla
-        
+        fileChooser.setMultiSelectionEnabled(true);
+
         int result = fileChooser.showOpenDialog(this);
-        
+
         if (result == JFileChooser.APPROVE_OPTION) {
-            // Gestisce sia selezione singola che multipla
             File[] filesSelezionati = fileChooser.getSelectedFiles();
             if (filesSelezionati == null || filesSelezionati.length == 0) {
-                // Fallback per selezione singola
                 File fileSingolo = fileChooser.getSelectedFile();
                 if (fileSingolo != null) {
                     filesSelezionati = new File[] { fileSingolo };
@@ -391,21 +432,18 @@ public class SchermataImmagini extends JPanel {
                 if (!dirImages.exists()) {
                     dirImages.mkdirs();
                 }
-                
+
                 int numeroCaricate = 0;
-                int prossimoNumero = immaginiAuto.size(); // Conta le immagini già esistenti
+                int prossimoNumero = immaginiAuto.size();
 
                 for (File fileSelezionato : filesSelezionati) {
-                    // Determina il nome del file
                     String nomeFile;
 
                     if (autoSelezionata.getImmagine() == null || autoSelezionata.getImmagine().isEmpty()) {
-                        // Prima immagine - diventa l'immagine principale
                         nomeFile = "auto_" + autoSelezionata.getId() + "_" + fileSelezionato.getName();
                         autoSelezionata.setImmagine(nomeFile);
                         autoDAO.aggiorna(autoSelezionata);
                     } else {
-                        // Immagini successive - usa pattern _1, _2, _3...
                         String nomeBase = autoSelezionata.getImmagine().replaceAll("\\.[^.]+$", "");
                         String nomeFileOriginale = fileSelezionato.getName();
                         String estensione = "";
@@ -414,7 +452,7 @@ public class SchermataImmagini extends JPanel {
                         }
 
                         nomeFile = nomeBase + "_" + prossimoNumero + estensione;
-                        prossimoNumero++; // Incrementa per la prossima immagine
+                        prossimoNumero++;
                     }
 
                     File destinazione = new File(dirImages, nomeFile);
@@ -423,14 +461,15 @@ public class SchermataImmagini extends JPanel {
 
                     numeroCaricate++;
                 }
-                
+
                 JOptionPane.showMessageDialog(this,
                     "✅ " + numeroCaricate + " immagine(i) caricata(e) con successo!",
                     "Successo",
                     JOptionPane.INFORMATION_MESSAGE);
-                
+
+                caricaGriglia();
                 caricaImmaginiAuto();
-                
+
             } catch (IOException ex) {
                 JOptionPane.showMessageDialog(this,
                     "❌ Errore durante il caricamento:\n" + ex.getMessage(),
@@ -439,44 +478,43 @@ public class SchermataImmagini extends JPanel {
             }
         }
     }
-    
+
     private void eliminaImmagine() {
         if (immaginiAuto.isEmpty() || indiceCorrente >= immaginiAuto.size()) {
             return;
         }
-        
+
         String nomeImmagine = immaginiAuto.get(indiceCorrente);
-        
-        // Verifica se è l'immagine principale
-        boolean isPrincipale = (autoSelezionata.getImmagine() != null && 
+
+        boolean isPrincipale = (autoSelezionata.getImmagine() != null &&
                                 autoSelezionata.getImmagine().equals(nomeImmagine));
-        
+
         String messaggio = "Sei sicuro di voler eliminare l'immagine:\n" + nomeImmagine;
         if (isPrincipale) {
-            messaggio += "\n\n⚠️ ATTENZIONE: Questa è l'immagine principale dell'auto!";
+            messaggio += "\n\n⚠️ ATTENZIONE: Questa è l'immagine principale!";
         }
-        
+
         int conferma = JOptionPane.showConfirmDialog(this,
             messaggio,
             "Conferma Eliminazione",
             JOptionPane.YES_NO_OPTION,
             JOptionPane.WARNING_MESSAGE);
-        
+
         if (conferma == JOptionPane.YES_OPTION) {
             File fileImmagine = new File("resources/images/" + nomeImmagine);
-            
+
             if (fileImmagine.delete()) {
-                // Se era l'immagine principale, aggiorna il database
                 if (isPrincipale) {
                     autoSelezionata.setImmagine(null);
                     autoDAO.aggiorna(autoSelezionata);
                 }
-                
+
                 JOptionPane.showMessageDialog(this,
                     "✅ Immagine eliminata con successo!",
                     "Successo",
                     JOptionPane.INFORMATION_MESSAGE);
-                
+
+                caricaGriglia();
                 caricaImmaginiAuto();
             } else {
                 JOptionPane.showMessageDialog(this,
@@ -496,7 +534,6 @@ public class SchermataImmagini extends JPanel {
         boolean isPrincipale = (autoSelezionata.getImmagine() != null &&
                                 autoSelezionata.getImmagine().equals(nomeImmagineAttuale));
 
-        // Dialog per modifica
         JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Modifica Immagine", true);
         dialog.setLayout(new BorderLayout(10, 10));
         dialog.setSize(500, 250);
@@ -506,7 +543,6 @@ public class SchermataImmagini extends JPanel {
         panelContenuto.setLayout(new BoxLayout(panelContenuto, BoxLayout.Y_AXIS));
         panelContenuto.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Info immagine attuale
         JLabel lblInfo = new JLabel("Immagine attuale: " + nomeImmagineAttuale);
         lblInfo.setFont(new Font("Arial", Font.BOLD, 14));
         lblInfo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -523,14 +559,12 @@ public class SchermataImmagini extends JPanel {
         panelContenuto.add(lblInfo);
         panelContenuto.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // Campo nuovo nome
         JPanel panelNome = new JPanel(new BorderLayout(10, 0));
         panelNome.setAlignmentX(Component.LEFT_ALIGNMENT);
         panelNome.setMaximumSize(new Dimension(450, 30));
         JLabel lblNuovoNome = new JLabel("Nuovo nome:");
         lblNuovoNome.setPreferredSize(new Dimension(100, 25));
 
-        // Estrai nome senza estensione
         String estensione = "";
         String nomeBase = nomeImmagineAttuale;
         if (nomeImmagineAttuale.contains(".")) {
@@ -549,17 +583,15 @@ public class SchermataImmagini extends JPanel {
         panelContenuto.add(panelNome);
         panelContenuto.add(Box.createRigidArea(new Dimension(0, 15)));
 
-        // Checkbox per impostare come principale
         JCheckBox chkPrincipale = new JCheckBox("Imposta come immagine principale");
         chkPrincipale.setAlignmentX(Component.LEFT_ALIGNMENT);
         chkPrincipale.setSelected(isPrincipale);
-        chkPrincipale.setEnabled(!isPrincipale); // Disabilita se già principale
+        chkPrincipale.setEnabled(!isPrincipale);
         panelContenuto.add(chkPrincipale);
 
         dialog.add(panelContenuto, BorderLayout.CENTER);
 
-        // Pulsanti
-        JPanel panelPulsanti = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JPanel panelPulsantiDialog = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnSalva = new JButton("💾 Salva");
         JButton btnAnnulla = new JButton("Annulla");
 
@@ -574,10 +606,8 @@ public class SchermataImmagini extends JPanel {
                 return;
             }
 
-            // Aggiungi estensione
             nuovoNome = nuovoNome + estensioneFinale;
 
-            // Se il nome è cambiato, rinomina il file
             if (!nuovoNome.equals(nomeImmagineAttuale)) {
                 File fileOriginale = new File("resources/images/" + nomeImmagineAttuale);
                 File fileNuovo = new File("resources/images/" + nuovoNome);
@@ -591,16 +621,13 @@ public class SchermataImmagini extends JPanel {
                 }
 
                 if (fileOriginale.renameTo(fileNuovo)) {
-                    // Se era l'immagine principale, aggiorna il database
                     if (isPrincipale) {
                         autoSelezionata.setImmagine(nuovoNome);
                         autoDAO.aggiorna(autoSelezionata);
                     }
 
                     JOptionPane.showMessageDialog(dialog,
-                        "✅ Immagine rinominata con successo!\n" +
-                        "Da: " + nomeImmagineAttuale + "\n" +
-                        "A: " + nuovoNome,
+                        "✅ Immagine rinominata con successo!",
                         "Successo",
                         JOptionPane.INFORMATION_MESSAGE);
                 } else {
@@ -612,7 +639,6 @@ public class SchermataImmagini extends JPanel {
                 }
             }
 
-            // Se richiesto, imposta come principale
             if (chkPrincipale.isSelected() && !isPrincipale) {
                 String nomeFinale = nuovoNome.equals(nomeImmagineAttuale) ? nomeImmagineAttuale : nuovoNome;
                 autoSelezionata.setImmagine(nomeFinale);
@@ -625,15 +651,30 @@ public class SchermataImmagini extends JPanel {
             }
 
             dialog.dispose();
+            caricaGriglia();
             caricaImmaginiAuto();
         });
 
         btnAnnulla.addActionListener(e -> dialog.dispose());
 
-        panelPulsanti.add(btnSalva);
-        panelPulsanti.add(btnAnnulla);
-        dialog.add(panelPulsanti, BorderLayout.SOUTH);
+        panelPulsantiDialog.add(btnSalva);
+        panelPulsantiDialog.add(btnAnnulla);
+        dialog.add(panelPulsantiDialog, BorderLayout.SOUTH);
 
         dialog.setVisible(true);
+    }
+
+    /**
+     * Metodo pubblico per aggiornare i dati della schermata.
+     */
+    public void refresh() {
+        caricaGriglia();
+        if (autoSelezionata != null) {
+            // Ricarica l'auto dal database per avere dati aggiornati
+            autoSelezionata = autoDAO.getById(autoSelezionata.getId());
+            if (autoSelezionata != null) {
+                caricaImmaginiAuto();
+            }
+        }
     }
 }

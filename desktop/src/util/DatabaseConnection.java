@@ -51,13 +51,13 @@ public class DatabaseConnection {
         try (Connection conn = getConnection();
              Statement stmt = conn.createStatement()) {
             
-            // Crea tabella AUTO
+            // Crea tabella AUTO (targa opzionale, senza vincolo UNIQUE)
             String sqlAuto = """
                 CREATE TABLE IF NOT EXISTS auto (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     marca TEXT NOT NULL,
                     modello TEXT NOT NULL,
-                    targa TEXT UNIQUE,
+                    targa TEXT,
                     anno INTEGER,
                     prezzo REAL NOT NULL,
                     giacenza INTEGER DEFAULT 0,
