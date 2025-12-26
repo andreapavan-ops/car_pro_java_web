@@ -76,24 +76,28 @@ public class SchermataOrdini extends JPanel {
         add(splitPaneSuperiore, BorderLayout.CENTER);
 
         // Footer con pulsanti stile Catalogo
-        JPanel panelFooter = new JPanel(new GridLayout(1, 5, 0, 0));
+        JPanel panelFooter = new JPanel(new GridLayout(1, 7, 0, 0));
         panelFooter.setBackground(new Color(206, 43, 55)); // Rosso bandiera italiana
         panelFooter.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
 
         Color coloreSidebar = new Color(45, 52, 54);
-        JPanel btnNuovoFornitore = creaBottoneConIcona("👥", "Nuovo Fornitore", coloreSidebar, e -> mostraDialogNuovoFornitore());
-        JPanel btnNuovoOrdine = creaBottoneConIcona("📦", "Nuovo Ordine", coloreSidebar, e -> mostraDialogNuovoOrdine());
-        JPanel btnModificaStato = creaBottoneConIcona("✏️", "Modifica Stato", coloreSidebar, e -> mostraDialogModificaStato());
-        JPanel btnElimina = creaBottoneConIcona("🗑️", "Elimina", coloreSidebar, e -> eliminaOrdine());
-        JPanel btnAggiorna = creaBottoneConIcona("🔄", "Aggiorna", coloreSidebar, e -> {
+        JPanel btnNuovoFornitore = creaBottoneConIcona("\uD83D\uDC65", "Nuovo Fornitore", coloreSidebar, e -> mostraDialogNuovoFornitore());
+        JPanel btnModificaFornitore = creaBottoneConIcona("\u270F", "Modifica Fornitore", coloreSidebar, e -> mostraDialogModificaFornitore());
+        JPanel btnEliminaFornitore = creaBottoneConIcona("\uD83D\uDDD1", "Elimina Fornitore", coloreSidebar, e -> eliminaFornitore());
+        JPanel btnNuovoOrdine = creaBottoneConIcona("\uD83D\uDCE6", "Nuovo Ordine", coloreSidebar, e -> mostraDialogNuovoOrdine());
+        JPanel btnModificaStato = creaBottoneConIcona("\u270F", "Modifica Stato", coloreSidebar, e -> mostraDialogModificaStato());
+        JPanel btnEliminaOrdine = creaBottoneConIcona("\uD83D\uDDD1", "Elimina Ordine", coloreSidebar, e -> eliminaOrdine());
+        JPanel btnAggiorna = creaBottoneConIcona("\uD83D\uDD04", "Aggiorna", coloreSidebar, e -> {
             caricaFornitori();
             caricaOrdini();
         });
 
         panelFooter.add(btnNuovoFornitore);
+        panelFooter.add(btnModificaFornitore);
+        panelFooter.add(btnEliminaFornitore);
         panelFooter.add(btnNuovoOrdine);
         panelFooter.add(btnModificaStato);
-        panelFooter.add(btnElimina);
+        panelFooter.add(btnEliminaOrdine);
         panelFooter.add(btnAggiorna);
 
         add(panelFooter, BorderLayout.SOUTH);
