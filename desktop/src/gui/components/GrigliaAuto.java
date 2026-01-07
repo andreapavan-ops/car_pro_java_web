@@ -1,6 +1,7 @@
 package gui.components;
 
 import model.Auto;
+import util.ResourceHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -145,12 +146,13 @@ public class GrigliaAuto extends JPanel {
         if (auto.getImmagine() != null && !auto.getImmagine().isEmpty()) {
             String percorsoImmagine = auto.getImmagine();
             
-            // Se il percorso non è assoluto, cerca in resources/images/
+            // Se il percorso non è assoluto, cerca nella cartella images
+            File fileImmagine;
             if (!new File(percorsoImmagine).isAbsolute()) {
-                percorsoImmagine = "resources/images/" + auto.getImmagine();
+                fileImmagine = ResourceHelper.getImageFile(auto.getImmagine());
+            } else {
+                fileImmagine = new File(percorsoImmagine);
             }
-            
-            File fileImmagine = new File(percorsoImmagine);
             
             if (fileImmagine.exists()) {
                 try {

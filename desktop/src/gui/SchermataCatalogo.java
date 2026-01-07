@@ -3,6 +3,7 @@ package gui;
 import dao.AutoDAO;
 import model.Auto;
 import gui.components.GrigliaAuto;
+import util.ResourceHelper;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -255,7 +256,7 @@ public class SchermataCatalogo extends JPanel {
             }
             
             String nomeImmagine = immagini.get(indiceCorrente[0]);
-            File fileImmagine = new File("resources/images/" + nomeImmagine);
+            File fileImmagine = ResourceHelper.getImageFile(nomeImmagine);
             
             if (fileImmagine.exists()) {
                 ImageIcon icon = new ImageIcon(fileImmagine.getAbsolutePath());
@@ -453,7 +454,7 @@ public class SchermataCatalogo extends JPanel {
         
         // Cerca altre immagini con pattern: nomefile_1.jpg, nomefile_2.jpg, ecc.
         if (auto.getImmagine() != null) {
-            File dirImages = new File("resources/images");
+            File dirImages = new File(ResourceHelper.getImagesPath());
             if (dirImages.exists() && dirImages.isDirectory()) {
                 String nomeBase = auto.getImmagine().replaceAll("\\.[^.]+$", "");
                 
@@ -477,8 +478,8 @@ public class SchermataCatalogo extends JPanel {
         fullscreenDialog.setLocationRelativeTo(parent);
         fullscreenDialog.setLayout(new BorderLayout());
         
-        File fileImmagine = new File("resources/images/" + nomeImmagine);
-        
+        File fileImmagine = ResourceHelper.getImageFile(nomeImmagine);
+
         if (fileImmagine.exists()) {
             JLabel lblFullscreen = new JLabel();
             lblFullscreen.setHorizontalAlignment(SwingConstants.CENTER);
@@ -914,11 +915,11 @@ public class SchermataCatalogo extends JPanel {
             File fileSelezionato = fileChooser.getSelectedFile();
             
             try {
-                File dirImages = new File("resources/images");
+                File dirImages = new File(ResourceHelper.getImagesPath());
                 if (!dirImages.exists()) {
                     dirImages.mkdirs();
                 }
-                
+
                 String nomeFile = fileSelezionato.getName();
                 File destinazione = new File(dirImages, nomeFile);
                 

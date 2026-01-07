@@ -1,6 +1,7 @@
 package gui;
 
 import util.DatabaseConnection;
+import util.ResourceHelper;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -65,7 +66,7 @@ public class MainFrame extends JFrame {
         JLabel lblLogo = new JLabel();
         lblLogo.setAlignmentX(Component.LEFT_ALIGNMENT);
         lblLogo.setBorder(BorderFactory.createEmptyBorder(10, 20, 15, 0));
-        java.io.File fileLogo = new java.io.File("resources/images/logo.jpeg");
+        java.io.File fileLogo = ResourceHelper.getImageFile("logo.jpeg");
         if (fileLogo.exists()) {
             ImageIcon icon = new ImageIcon(fileLogo.getAbsolutePath());
             // Ridimensiona il logo a 80x60 mantenendo le proporzioni

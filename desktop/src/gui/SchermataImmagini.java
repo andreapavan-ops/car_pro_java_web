@@ -2,6 +2,7 @@ package gui;
 
 import dao.AutoDAO;
 import model.Auto;
+import util.ResourceHelper;
 import javax.swing.*;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
@@ -232,7 +233,7 @@ public class SchermataImmagini extends JPanel {
 
         // Carica immagine e ridimensiona automaticamente
         if (auto.getImmagine() != null && !auto.getImmagine().isEmpty()) {
-            File fileImg = new File("resources/images/" + auto.getImmagine());
+            File fileImg = ResourceHelper.getImageFile(auto.getImmagine());
             if (fileImg.exists()) {
                 ImageIcon icon = new ImageIcon(fileImg.getAbsolutePath());
                 Image img = icon.getImage().getScaledInstance(120, 80, Image.SCALE_SMOOTH);
@@ -282,7 +283,7 @@ public class SchermataImmagini extends JPanel {
     }
 
     private void mostraLogoDefault() {
-        File fileLogo = new File("resources/images/logo.jpeg");
+        File fileLogo = ResourceHelper.getImageFile("logo.jpeg");
         if (fileLogo.exists()) {
             ImageIcon icon = new ImageIcon(fileLogo.getAbsolutePath());
             // Ridimensiona mantenendo le proporzioni
@@ -319,7 +320,7 @@ public class SchermataImmagini extends JPanel {
 
         // Carica immagine principale
         if (autoSelezionata.getImmagine() != null && !autoSelezionata.getImmagine().isEmpty()) {
-            File fileMain = new File("resources/images/" + autoSelezionata.getImmagine());
+            File fileMain = ResourceHelper.getImageFile(autoSelezionata.getImmagine());
             if (fileMain.exists()) {
                 immaginiAuto.add(autoSelezionata.getImmagine());
             }
@@ -327,7 +328,7 @@ public class SchermataImmagini extends JPanel {
 
         // Carica immagini aggiuntive (pattern: nomefile_1.jpg, nomefile_2.jpg, ...)
         if (autoSelezionata.getImmagine() != null && autoSelezionata.getImmagine().contains(".")) {
-            File dirImages = new File("resources/images");
+            File dirImages = new File(ResourceHelper.getImagesPath());
             if (dirImages.exists() && dirImages.isDirectory()) {
                 String nomeBase = autoSelezionata.getImmagine().replaceAll("\\.[^.]+$", "");
                 String estensione = autoSelezionata.getImmagine().substring(
@@ -371,7 +372,7 @@ public class SchermataImmagini extends JPanel {
         }
 
         String nomeImmagine = immaginiAuto.get(indiceCorrente);
-        File fileImmagine = new File("resources/images/" + nomeImmagine);
+        File fileImmagine = ResourceHelper.getImageFile(nomeImmagine);
 
         if (fileImmagine.exists()) {
             ImageIcon icon = new ImageIcon(fileImmagine.getAbsolutePath());
@@ -428,7 +429,7 @@ public class SchermataImmagini extends JPanel {
             }
 
             try {
-                File dirImages = new File("resources/images");
+                File dirImages = new File(ResourceHelper.getImagesPath());
                 if (!dirImages.exists()) {
                     dirImages.mkdirs();
                 }
@@ -501,7 +502,7 @@ public class SchermataImmagini extends JPanel {
             JOptionPane.WARNING_MESSAGE);
 
         if (conferma == JOptionPane.YES_OPTION) {
-            File fileImmagine = new File("resources/images/" + nomeImmagine);
+            File fileImmagine = ResourceHelper.getImageFile(nomeImmagine);
 
             if (fileImmagine.delete()) {
                 if (isPrincipale) {
@@ -609,8 +610,8 @@ public class SchermataImmagini extends JPanel {
             nuovoNome = nuovoNome + estensioneFinale;
 
             if (!nuovoNome.equals(nomeImmagineAttuale)) {
-                File fileOriginale = new File("resources/images/" + nomeImmagineAttuale);
-                File fileNuovo = new File("resources/images/" + nuovoNome);
+                File fileOriginale = ResourceHelper.getImageFile(nomeImmagineAttuale);
+                File fileNuovo = ResourceHelper.getImageFile(nuovoNome);
 
                 if (fileNuovo.exists()) {
                     JOptionPane.showMessageDialog(dialog,
